@@ -1,0 +1,22 @@
+
+	[constants]
+	RoleAdmin = "Administrator"
+	RoleReceptionist = "Receptionist"
+
+	StatusCreated = 201
+	StatusBadRequest = 400
+	StatusUnauthorized = 401
+	StatusForbidden = 403
+	StatusInternalServerError = 500
+
+	MongoDBURI = "mongodb://localhost:27017"
+	MongoDBDatabase = "testdb"
+
+	CollectionUsers = "users"
+	CollectionValidCURPs = "valid_curps"
+
+	JWTSecretKey = "my_secret_key"
+
+	ServerAddress = "0.0.0.0"
+	ServerPort = "8000"
+	
