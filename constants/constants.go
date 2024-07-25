@@ -176,7 +176,7 @@ func createDefaultConfig(filename string) {
 
 	MongoDBURI = "mongodb://localhost:27017"
 	MongoDBDatabase = "testdb"
-	FrontendURL = "https://hotelman-five.vercel.app/"
+	FrontendURL = "https://hotelman-five.vercel.app"
 
 	CollectionUsers = "users"
 	CollectionValidCURPs = "valid_curps"

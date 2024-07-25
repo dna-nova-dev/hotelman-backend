@@ -24,7 +24,7 @@ func main() {
 
 	// Configura CORS
 	c := cors.New(cors.Options{
-		AllowedOrigins:   []string{constants.FrontendURL}, // Ajusta esto a la URL de tu frontend
+		AllowedOrigins:   []string{"%s", constants.FrontendURL}, // Ajusta esto a la URL de tu frontend
 		AllowCredentials: true,
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Content-Type", "Authorization"},
@@ -39,7 +39,7 @@ func main() {
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
 	}
-	log.Printf("Frontend URL: ", constants.FrontendURL)
+	log.Printf("Frontend URL: %s", constants.FrontendURL)
 	log.Printf("Servidor iniciado en http://%s:%s", constants.ServerAddress, constants.ServerPort)
 	log.Fatal(srv.ListenAndServe())
 }
