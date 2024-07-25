@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/rs/cors" // Importa el paquete de CORS
 	"go.mongodb.org/mongo-driver/mongo"
 
 	"hotelman-backend/config"
@@ -21,8 +22,19 @@ func main() {
 	router := mux.NewRouter()
 	routes.RegisterRoutes(router, client) // Registra las rutas usando las constantes
 
+	// Configura CORS
+	c := cors.New(cors.Options{
+		AllowedOrigins:   []string{"http://localhost:3000"}, // Ajusta esto a la URL de tu frontend
+		AllowCredentials: true,
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Content-Type", "Authorization"},
+	})
+
+	// Aplica el middleware de CORS
+	handler := c.Handler(router)
+
 	srv := &http.Server{
-		Handler:      router,
+		Handler:      handler,
 		Addr:         constants.ServerAddress + ":" + constants.ServerPort, // Usa las constantes para la dirección y puerto
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,

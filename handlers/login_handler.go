@@ -42,10 +42,10 @@ func (h *LoginHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	if tokenString, ok := h.getTokenFromMap(creds.Username); ok {
 		// Si hay un token válido, establecerlo en la cookie y devolverlo sin generar uno nuevo
 		http.SetCookie(w, &http.Cookie{
-			Name:     "token",
+			Name:     "Authorize",
 			Value:    tokenString,
 			Expires:  time.Now().Add(7 * 24 * time.Hour),
-			HttpOnly: true,
+			HttpOnly: false,
 		})
 		response := map[string]interface{}{
 			"token":  tokenString,
@@ -85,10 +85,10 @@ func (h *LoginHandler) Handle(w http.ResponseWriter, r *http.Request) {
 
 	// Establecer el token JWT en una cookie HttpOnly
 	http.SetCookie(w, &http.Cookie{
-		Name:     "Autorization",
+		Name:     "Authorize",
 		Value:    tokenString,
 		Expires:  time.Now().Add(7 * 24 * time.Hour),
-		HttpOnly: true,
+		HttpOnly: false,
 	})
 
 	// Responder con el token JWT y las claims en la respuesta JSON

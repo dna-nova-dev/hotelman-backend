@@ -10,16 +10,17 @@ import (
 
 type RequireAuth struct {
 	jwtKey []byte
+	roles  []string
 }
 
-func NewRequireAuth(jwtKey []byte) *RequireAuth {
-	return &RequireAuth{jwtKey: jwtKey}
+func NewRequireAuth(jwtKey []byte, roles []string) *RequireAuth {
+	return &RequireAuth{jwtKey: jwtKey, roles: roles}
 }
 
 func (ra *RequireAuth) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Obtener el token de la cookie
-		cookie, err := r.Cookie("Autorization")
+		cookie, err := r.Cookie("Authorize")
 		if err != nil {
 			w.WriteHeader(http.StatusUnauthorized)
 			w.Write([]byte("Invalid token"))
@@ -61,9 +62,10 @@ func (ra *RequireAuth) Middleware(next http.Handler) http.Handler {
 				w.Write([]byte("Invalid token"))
 				return
 			}
-			// Verificar que el rol del usuario sea "Administrador"
+
+			// Verificar el rol del usuario
 			if role, ok := claims["rol"].(string); ok {
-				if role != "Administracion" {
+				if !contains(ra.roles, role) {
 					w.WriteHeader(http.StatusForbidden)
 					w.Write([]byte("Access denied"))
 					return
@@ -86,4 +88,14 @@ func (ra *RequireAuth) Middleware(next http.Handler) http.Handler {
 			return
 		}
 	})
+}
+
+// Helper function to check if a slice contains a specific string
+func contains(slice []string, item string) bool {
+	for _, v := range slice {
+		if v == item {
+			return true
+		}
+	}
+	return false
 }

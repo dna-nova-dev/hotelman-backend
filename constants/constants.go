@@ -3,6 +3,7 @@ package constants
 import (
 	"log"
 	"os"
+	"strconv"
 
 	"github.com/pelletier/go-toml"
 )
@@ -39,45 +40,114 @@ var (
 )
 
 func init() {
+	loadConfig()
+}
+
+func loadConfig() {
+	// Variables por defecto
+	defaultConfig := map[string]string{
+		"RoleAdmin":                 "Administrator",
+		"RoleReceptionist":          "Receptionist",
+		"StatusCreated":             "201",
+		"StatusBadRequest":          "400",
+		"StatusUnauthorized":        "401",
+		"StatusForbidden":           "403",
+		"StatusInternalServerError": "500",
+		"MongoDBURI":                "mongodb://localhost:27017",
+		"MongoDBDatabase":           "testdb",
+		"CollectionUsers":           "users",
+		"CollectionValidCURPs":      "valid_curps",
+		"JWTSecretKey":              "my_secret_key",
+		"ServerAddress":             "0.0.0.0",
+		"ServerPort":                "8000",
+	}
+
+	// Intentar cargar desde variables de entorno
+	for key := range defaultConfig {
+		if val, exists := os.LookupEnv(key); exists {
+			defaultConfig[key] = val
+		}
+	}
+
+	// Si alguna variable no está en el entorno, cargar desde config.toml
+	if !allEnvVariablesSet(defaultConfig) {
+		loadFromToml(defaultConfig)
+	}
+
+	assignConfigValues(defaultConfig)
+}
+
+func allEnvVariablesSet(config map[string]string) bool {
+	requiredKeys := []string{
+		"RoleAdmin", "RoleReceptionist", "StatusCreated", "StatusBadRequest",
+		"StatusUnauthorized", "StatusForbidden", "StatusInternalServerError",
+		"MongoDBURI", "MongoDBDatabase", "CollectionUsers", "CollectionValidCURPs",
+		"JWTSecretKey", "ServerAddress", "ServerPort",
+	}
+
+	for _, key := range requiredKeys {
+		if config[key] == "" {
+			return false
+		}
+	}
+	return true
+}
+
+func loadFromToml(config map[string]string) {
 	configFile := "config.toml"
 
 	// Verificar si el archivo config.toml ya existe
 	if _, err := os.Stat(configFile); os.IsNotExist(err) {
-		// Si no existe, crear un archivo config.toml con valores predeterminados
 		createDefaultConfig(configFile)
 	}
 
 	// Abrir y leer el archivo TOML
-	config, err := toml.LoadFile(configFile)
+	tomlConfig, err := toml.LoadFile(configFile)
 	if err != nil {
 		log.Fatalf("Error loading TOML config file: %s", err)
 	}
 
 	// Mapear las variables del archivo TOML a las variables de constantes
-	if err := config.Unmarshal(&Config); err != nil {
+	if err := tomlConfig.Unmarshal(&Config); err != nil {
 		log.Fatalf("Error unmarshaling TOML config: %s", err)
 	}
 
-	// Asignar valores a las variables de constantes
-	RoleAdmin = Config.Constants.RoleAdmin
-	RoleReceptionist = Config.Constants.RoleReceptionist
+	config["RoleAdmin"] = Config.Constants.RoleAdmin
+	config["RoleReceptionist"] = Config.Constants.RoleReceptionist
+	config["StatusCreated"] = strconv.Itoa(Config.Constants.StatusCreated)
+	config["StatusBadRequest"] = strconv.Itoa(Config.Constants.StatusBadRequest)
+	config["StatusUnauthorized"] = strconv.Itoa(Config.Constants.StatusUnauthorized)
+	config["StatusForbidden"] = strconv.Itoa(Config.Constants.StatusForbidden)
+	config["StatusInternalServerError"] = strconv.Itoa(Config.Constants.StatusInternalServerError)
+	config["MongoDBURI"] = Config.Constants.MongoDBURI
+	config["MongoDBDatabase"] = Config.Constants.MongoDBDatabase
+	config["CollectionUsers"] = Config.Constants.CollectionUsers
+	config["CollectionValidCURPs"] = Config.Constants.CollectionValidCURPs
+	config["JWTSecretKey"] = Config.Constants.JWTSecretKey
+	config["ServerAddress"] = Config.Constants.ServerAddress
+	config["ServerPort"] = Config.Constants.ServerPort
+}
 
-	StatusCreated = Config.Constants.StatusCreated
-	StatusBadRequest = Config.Constants.StatusBadRequest
-	StatusUnauthorized = Config.Constants.StatusUnauthorized
-	StatusForbidden = Config.Constants.StatusForbidden
-	StatusInternalServerError = Config.Constants.StatusInternalServerError
+func assignConfigValues(config map[string]string) {
+	RoleAdmin = config["RoleAdmin"]
+	RoleReceptionist = config["RoleReceptionist"]
 
-	MongoDBURI = Config.Constants.MongoDBURI
-	MongoDBDatabase = Config.Constants.MongoDBDatabase
+	StatusCreated, _ = strconv.Atoi(config["StatusCreated"])
+	StatusBadRequest, _ = strconv.Atoi(config["StatusBadRequest"])
+	StatusUnauthorized, _ = strconv.Atoi(config["StatusUnauthorized"])
+	StatusForbidden, _ = strconv.Atoi(config["StatusForbidden"])
+	StatusInternalServerError, _ = strconv.Atoi(config["StatusInternalServerError"])
 
-	CollectionUsers = Config.Constants.CollectionUsers
-	CollectionValidCURPs = Config.Constants.CollectionValidCURPs
+	MongoDBURI = config["MongoDBURI"]
+	MongoDBDatabase = config["MongoDBDatabase"]
 
-	JWTSecretKey = Config.Constants.JWTSecretKey
+	CollectionUsers = config["CollectionUsers"]
+	CollectionValidCURPs = config["CollectionValidCURPs"]
 
-	ServerAddress = Config.Constants.ServerAddress
-	ServerPort = Config.Constants.ServerPort
+	JWTSecretKey = config["JWTSecretKey"]
+
+	ServerAddress = config["ServerAddress"]
+	ServerPort = config["ServerPort"]
 
 	// Inicializar AllCollections con las colecciones definidas individualmente
 	AllCollections = []string{

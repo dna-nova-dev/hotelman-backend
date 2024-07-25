@@ -5,13 +5,14 @@ import (
 )
 
 type User struct {
-	Nombres   string `json:"nombres"`
-	Apellidos string `json:"apellidos"`
-	Correo    string `json:"correo"`
-	Celular   string `json:"celular"`
-	Password  string `json:"password"`
-	Rol       string `json:"rol"` // "Administracion" o "Recepcionista"
-	CURP      string `json:"curp,omitempty"`
+	Nombres        string `json:"nombres" bson:"nombres"`
+	Apellidos      string `json:"apellidos" bson:"apellidos"`
+	Correo         string `json:"correo" bson:"correo"`
+	Celular        string `json:"celular" bson:"celular"`
+	Password       string `json:"password" bson:"password"`
+	Rol            string `json:"rol" bson:"rol"` // "Administracion" o "Recepcionista"
+	CURP           string `json:"curp,omitempty" bson:"curp,omitempty"`
+	ProfilePicture string `json:"profilePicture,omitempty" bson:"profilePicture,omitempty"` // URL de la imagen de perfil
 }
 
 type Credentials struct {

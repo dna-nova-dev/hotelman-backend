@@ -1,45 +1,38 @@
 package handlers
 
 import (
-	"hotelman-backend/models"
+	"encoding/json"
 	"net/http"
-
-	"github.com/dgrijalva/jwt-go"
 )
 
-type WelcomeHandler struct {
-	jwtKey []byte // Agregar jwtKey como un campo de la estructura
-}
+// WelcomeHandler estructura para el manejador de la ruta /welcome
+type WelcomeHandler struct{}
 
+// Handle maneja la solicitud para el endpoint /welcome
 func (h *WelcomeHandler) Handle(w http.ResponseWriter, r *http.Request) {
-	cookie, err := r.Cookie("token")
-	if err != nil {
-		if err == http.ErrNoCookie {
-			w.WriteHeader(http.StatusUnauthorized)
-			return
+	// Extraer todas las cookies de la solicitud
+	cookies := r.Cookies()
+
+	// Aquí puedes ajustar cómo obtienes el token, por ejemplo, de las cookies o de la sesión
+	var token string
+	for _, cookie := range cookies {
+		if cookie.Name == "Authorize" { // Cambia "token" al nombre real de la cookie
+			token = cookie.Value
+			break
 		}
-		w.WriteHeader(http.StatusBadRequest)
-		return
 	}
 
-	tokenStr := cookie.Value
+	// Configurar el encabezado de tipo de contenido y el código de estado
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
 
-	claims := &models.Claims{}
-	tkn, err := jwt.ParseWithClaims(tokenStr, claims, func(token *jwt.Token) (interface{}, error) {
-		return h.jwtKey, nil // Acceder a jwtKey a través de la instancia h
-	})
-	if err != nil {
-		if err == jwt.ErrSignatureInvalid {
-			w.WriteHeader(http.StatusUnauthorized)
-			return
-		}
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-	if !tkn.Valid {
-		w.WriteHeader(http.StatusUnauthorized)
-		return
+	// Construir la respuesta JSON con el token
+	response := map[string]string{
+		"token": token,
 	}
 
-	w.Write([]byte("Welcome " + claims.Username))
+	// Codificar el mapa en JSON y enviarlo como respuesta
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		http.Error(w, "Failed to encode JSON response", http.StatusInternalServerError)
+	}
 }
