@@ -23,6 +23,7 @@ var (
 	// MongoDB
 	MongoDBURI      string
 	MongoDBDatabase string
+	FrontendURL     string
 
 	// Collections
 	CollectionUsers      string
@@ -55,6 +56,7 @@ func loadConfig() {
 		"StatusInternalServerError": "500",
 		"MongoDBURI":                "mongodb://localhost:27017",
 		"MongoDBDatabase":           "testdb",
+		"FrontendURL":               "https://hotelman-five.vercel.app",
 		"CollectionUsers":           "users",
 		"CollectionValidCURPs":      "valid_curps",
 		"JWTSecretKey":              "my_secret_key",
@@ -81,7 +83,7 @@ func allEnvVariablesSet(config map[string]string) bool {
 	requiredKeys := []string{
 		"RoleAdmin", "RoleReceptionist", "StatusCreated", "StatusBadRequest",
 		"StatusUnauthorized", "StatusForbidden", "StatusInternalServerError",
-		"MongoDBURI", "MongoDBDatabase", "CollectionUsers", "CollectionValidCURPs",
+		"MongoDBURI", "MongoDBDatabase", "FrontendURL", "CollectionUsers", "CollectionValidCURPs",
 		"JWTSecretKey", "ServerAddress", "ServerPort",
 	}
 
@@ -121,6 +123,7 @@ func loadFromToml(config map[string]string) {
 	config["StatusInternalServerError"] = strconv.Itoa(Config.Constants.StatusInternalServerError)
 	config["MongoDBURI"] = Config.Constants.MongoDBURI
 	config["MongoDBDatabase"] = Config.Constants.MongoDBDatabase
+	config["FrontendURL"] = Config.Constants.FrontendURL
 	config["CollectionUsers"] = Config.Constants.CollectionUsers
 	config["CollectionValidCURPs"] = Config.Constants.CollectionValidCURPs
 	config["JWTSecretKey"] = Config.Constants.JWTSecretKey
@@ -140,6 +143,7 @@ func assignConfigValues(config map[string]string) {
 
 	MongoDBURI = config["MongoDBURI"]
 	MongoDBDatabase = config["MongoDBDatabase"]
+	FrontendURL = config["FrontendURL"]
 
 	CollectionUsers = config["CollectionUsers"]
 	CollectionValidCURPs = config["CollectionValidCURPs"]
@@ -172,6 +176,7 @@ func createDefaultConfig(filename string) {
 
 	MongoDBURI = "mongodb://localhost:27017"
 	MongoDBDatabase = "testdb"
+	FrontendURL = "https://hotelman-five.vercel.app/"
 
 	CollectionUsers = "users"
 	CollectionValidCURPs = "valid_curps"
@@ -216,6 +221,7 @@ type Constants struct {
 
 	MongoDBURI      string `toml:"MongoDBURI"`
 	MongoDBDatabase string `toml:"MongoDBDatabase"`
+	FrontendURL     string `toml:"FrontendURL"`
 
 	CollectionUsers      string `toml:"CollectionUsers"`
 	CollectionValidCURPs string `toml:"CollectionValidCURPs"`
