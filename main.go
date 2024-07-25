@@ -39,7 +39,7 @@ func main() {
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
 	}
-
+	log.Printf("Frontend URL: ", constants.FrontendURL)
 	log.Printf("Servidor iniciado en http://%s:%s", constants.ServerAddress, constants.ServerPort)
 	log.Fatal(srv.ListenAndServe())
 }
