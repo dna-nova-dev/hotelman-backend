@@ -3,9 +3,9 @@ package main
 import (
 	"log"
 	"net/http"
-	"os"
 	"time"
 
+	"github.com/cloudinary/cloudinary-go/v2"
 	"github.com/gorilla/mux"
 	"github.com/rs/cors" // Importa el paquete de CORS
 	"go.mongodb.org/mongo-driver/mongo"
@@ -18,20 +18,20 @@ import (
 var client *mongo.Client
 
 func main() {
-	// Crear la carpeta uploads si no existe
-	err := os.MkdirAll("uploads", os.ModePerm)
-	if err != nil {
-		log.Fatalf("Error al crear la carpeta 'uploads': %v", err)
-	}
-
 	client = config.ConnectDB() // Conecta a la base de datos MongoDB
 
+	// Configura Cloudinary v2
+	cloudinary, err := cloudinary.NewFromParams(constants.CloudinaryCloudName, constants.CloudinaryAPIKey, constants.CloudinaryAPISecret)
+	if err != nil {
+		log.Fatalf("Error al configurar Cloudinary: %v", err)
+	}
+
 	router := mux.NewRouter()
-	routes.RegisterRoutes(router, client) // Registra las rutas usando las constantes
+	routes.RegisterRoutes(router, client, cloudinary) // Registra las rutas
 
 	// Configura CORS
 	c := cors.New(cors.Options{
-		AllowedOrigins:   []string{"%s", constants.FrontendURL}, // Ajusta esto a la URL de tu frontend
+		AllowedOrigins:   []string{"%s", constants.FrontendURL},
 		AllowCredentials: true,
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Content-Type", "Authorization"},
@@ -42,7 +42,7 @@ func main() {
 
 	srv := &http.Server{
 		Handler:      handler,
-		Addr:         constants.ServerAddress + ":" + constants.ServerPort, // Usa las constantes para la dirección y puerto
+		Addr:         constants.ServerAddress + ":" + constants.ServerPort,
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
 	}

@@ -36,6 +36,11 @@ var (
 	ServerAddress string
 	ServerPort    string
 
+	// Cloudinary
+	CloudinaryCloudName string
+	CloudinaryAPIKey    string
+	CloudinaryAPISecret string
+
 	// AllCollections contiene todos los nombres de colecciones definidos
 	AllCollections []string
 )
@@ -62,6 +67,9 @@ func loadConfig() {
 		"JWTSecretKey":              "my_secret_key",
 		"ServerAddress":             "0.0.0.0",
 		"ServerPort":                "8000",
+		"CloudinaryCloudName":       "your-cloudinary-cloud-name",
+		"CloudinaryAPIKey":          "your-cloudinary-api-key",
+		"CloudinaryAPISecret":       "your-cloudinary-api-secret",
 	}
 
 	// Intentar cargar desde variables de entorno
@@ -85,6 +93,7 @@ func allEnvVariablesSet(config map[string]string) bool {
 		"StatusUnauthorized", "StatusForbidden", "StatusInternalServerError",
 		"MongoDBURI", "MongoDBDatabase", "FrontendURL", "CollectionUsers", "CollectionValidCURPs",
 		"JWTSecretKey", "ServerAddress", "ServerPort",
+		"CloudinaryCloudName", "CloudinaryAPIKey", "CloudinaryAPISecret",
 	}
 
 	for _, key := range requiredKeys {
@@ -129,6 +138,9 @@ func loadFromToml(config map[string]string) {
 	config["JWTSecretKey"] = Config.Constants.JWTSecretKey
 	config["ServerAddress"] = Config.Constants.ServerAddress
 	config["ServerPort"] = Config.Constants.ServerPort
+	config["CloudinaryCloudName"] = Config.Constants.CloudinaryCloudName
+	config["CloudinaryAPIKey"] = Config.Constants.CloudinaryAPIKey
+	config["CloudinaryAPISecret"] = Config.Constants.CloudinaryAPISecret
 }
 
 func assignConfigValues(config map[string]string) {
@@ -152,6 +164,11 @@ func assignConfigValues(config map[string]string) {
 
 	ServerAddress = config["ServerAddress"]
 	ServerPort = config["ServerPort"]
+
+	// Cloudinary
+	CloudinaryCloudName = config["CloudinaryCloudName"]
+	CloudinaryAPIKey = config["CloudinaryAPIKey"]
+	CloudinaryAPISecret = config["CloudinaryAPISecret"]
 
 	// Inicializar AllCollections con las colecciones definidas individualmente
 	AllCollections = []string{
@@ -185,6 +202,10 @@ func createDefaultConfig(filename string) {
 
 	ServerAddress = "0.0.0.0"
 	ServerPort = "8000"
+
+	CloudinaryCloudName = "your-cloudinary-cloud-name"
+	CloudinaryAPIKey = "your-cloudinary-api-key"
+	CloudinaryAPISecret = "your-cloudinary-api-secret"
 	`
 
 	// Crear el archivo config.toml con los valores predeterminados
@@ -230,6 +251,10 @@ type Constants struct {
 
 	ServerAddress string `toml:"ServerAddress"`
 	ServerPort    string `toml:"ServerPort"`
+
+	CloudinaryCloudName string `toml:"CloudinaryCloudName"`
+	CloudinaryAPIKey    string `toml:"CloudinaryAPIKey"`
+	CloudinaryAPISecret string `toml:"CloudinaryAPISecret"`
 }
 
 // Config contiene las constantes del archivo TOML

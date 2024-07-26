@@ -3,21 +3,21 @@ package handlers
 import (
 	"context"
 	"encoding/json"
-	"io"
 	"mime/multipart"
 	"net/http"
-	"os"
-	"path/filepath"
 
 	"hotelman-backend/constants"
 	"hotelman-backend/models"
 
+	"github.com/cloudinary/cloudinary-go/v2"
+	"github.com/cloudinary/cloudinary-go/v2/api/uploader"
 	"go.mongodb.org/mongo-driver/mongo"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type SignupHandler struct {
-	Client *mongo.Client
+	Client     *mongo.Client
+	Cloudinary *cloudinary.Cloudinary // Agrega el campo para Cloudinary
 }
 
 func (h *SignupHandler) Handle(w http.ResponseWriter, r *http.Request) {
@@ -67,7 +67,7 @@ func (h *SignupHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	file, handler, err := r.FormFile("profilePicture")
 	if err == nil {
 		defer file.Close()
-		profilePictureURL, err := saveProfilePicture(file, handler)
+		profilePictureURL, err := h.uploadProfilePictureToCloudinary(file, handler)
 		if err != nil {
 			http.Error(w, "Error al guardar la imagen de perfil", http.StatusInternalServerError)
 			return
@@ -88,17 +88,13 @@ func (h *SignupHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{"message": "Usuario registrado con éxito"})
 }
 
-func saveProfilePicture(file multipart.File, handler *multipart.FileHeader) (string, error) {
-	tempFile, err := os.Create(filepath.Join("uploads", handler.Filename))
-	if err != nil {
-		return "", err
-	}
-	defer tempFile.Close()
-
-	_, err = io.Copy(tempFile, file)
+func (h *SignupHandler) uploadProfilePictureToCloudinary(file multipart.File, handler *multipart.FileHeader) (string, error) {
+	// Subir la imagen a Cloudinary
+	resp, err := h.Cloudinary.Upload.Upload(context.Background(), file, uploader.UploadParams{Folder: "profile_pictures"})
 	if err != nil {
 		return "", err
 	}
 
-	return tempFile.Name(), nil
+	// Retornar la URL de la imagen subida
+	return resp.SecureURL, nil
 }

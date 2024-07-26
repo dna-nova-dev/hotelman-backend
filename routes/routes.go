@@ -6,14 +6,16 @@ import (
 	"hotelman-backend/middleware"
 	"net/http"
 
+	"github.com/cloudinary/cloudinary-go/v2" // Importa el paquete de Cloudinary
 	"github.com/gorilla/mux"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-func RegisterRoutes(router *mux.Router, client *mongo.Client) {
+// RegisterRoutes registra todas las rutas y handlers
+func RegisterRoutes(router *mux.Router, client *mongo.Client, cloudinary *cloudinary.Cloudinary) {
 	// Crear instancias de los nuevos handlers
 	setupAdminHandler := &handlers.SetupAdminHandler{Client: client}
-	signupHandler := &handlers.SignupHandler{Client: client}
+	signupHandler := &handlers.SignupHandler{Client: client, Cloudinary: cloudinary} // Inicializa el campo Cloudinary
 	welcomeHandler := &handlers.WelcomeHandler{}
 	addValidCURPHandler := &handlers.AddValidCURPHandler{Client: client}
 
@@ -30,7 +32,7 @@ func RegisterRoutes(router *mux.Router, client *mongo.Client) {
 	requireAuthReceptionist := middleware.NewRequireAuth([]byte(constants.JWTSecretKey), []string{"Recepcionista", "Administracion"})
 
 	// Instancia de ServeProfilePictureHandler
-	serveProfilePictureHandler := handlers.NewServeProfilePictureHandler(client, []byte(constants.JWTSecretKey), "")
+	serveProfilePictureHandler := handlers.NewServeProfilePictureHandler(client, []byte(constants.JWTSecretKey), cloudinary)
 
 	// Endpoints utilizando los nuevos handlers
 	router.HandleFunc("/setup", setupAdminHandler.Handle).Methods("POST")

@@ -4,28 +4,27 @@ import (
 	"context"
 	"log"
 	"net/http"
-	"os"
-	"path/filepath"
 
 	"hotelman-backend/constants"
 	"hotelman-backend/models"
 
+	"github.com/cloudinary/cloudinary-go/v2"
 	"github.com/dgrijalva/jwt-go"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type ServeProfilePictureHandler struct {
-	Client  *mongo.Client
-	JWTKey  []byte
-	PicPath string // Directorio donde se almacenan las imágenes de perfil
+	Client     *mongo.Client
+	JWTKey     []byte
+	Cloudinary *cloudinary.Cloudinary // Agrega el campo para Cloudinary
 }
 
-func NewServeProfilePictureHandler(client *mongo.Client, jwtKey []byte, picPath string) *ServeProfilePictureHandler {
+func NewServeProfilePictureHandler(client *mongo.Client, jwtKey []byte, cloudinary *cloudinary.Cloudinary) *ServeProfilePictureHandler {
 	return &ServeProfilePictureHandler{
-		Client:  client,
-		JWTKey:  jwtKey,
-		PicPath: picPath,
+		Client:     client,
+		JWTKey:     jwtKey,
+		Cloudinary: cloudinary,
 	}
 }
 
@@ -79,23 +78,16 @@ func (h *ServeProfilePictureHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 		log.Println("User not found in database:", err)
 		return
 	}
-	log.Println("User profile picture from database:", user.ProfilePicture)
 
-	// Construir la ruta del archivo de la imagen
-	filePath := filepath.Join(h.PicPath, user.ProfilePicture)
-	log.Println("Constructed file path:", filePath)
-
-	// Verificar si el archivo existe
-	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+	// Obtener la URL de la imagen de perfil desde Cloudinary
+	imageURL := user.ProfilePicture
+	if imageURL == "" {
 		http.NotFound(w, r)
-		log.Println("Profile picture not found at path:", filePath)
+		log.Println("No profile picture URL found for user:", email)
 		return
 	}
 
-	// Establecer el tipo de contenido
-	w.Header().Set("Content-Type", "image/jpeg")
-
-	// Leer y escribir el archivo de la imagen
-	http.ServeFile(w, r, filePath)
-	log.Println("Serving profile picture:", filePath)
+	// Redirigir al cliente a la URL de la imagen de perfil en Cloudinary
+	http.Redirect(w, r, imageURL, http.StatusSeeOther)
+	log.Println("Redirecting to profile picture:", imageURL)
 }
