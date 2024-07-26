@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"net/http"
+	"strings"
 
 	"hotelman-backend/constants"
 	"hotelman-backend/models"
@@ -29,16 +30,29 @@ func NewServeProfilePictureHandler(client *mongo.Client, jwtKey []byte, cloudina
 }
 
 func (h *ServeProfilePictureHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	// Obtener el token de la cookie
-	cookie, err := r.Cookie("Authorize")
-	if err != nil {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		log.Println("No token cookie found:", err)
-		return
+	var tokenString string
+
+	// Intentar obtener el token del header Authorization
+	authHeader := r.Header.Get("Authorization")
+	if authHeader != "" {
+		parts := strings.Split(authHeader, " ")
+		if len(parts) == 2 && parts[0] == "Bearer" {
+			tokenString = parts[1]
+		}
 	}
 
-	tokenString := cookie.Value
-	log.Println("Token string from cookie:", tokenString)
+	// Si no se encontró el token en el header, intentar obtenerlo de la cookie
+	if tokenString == "" {
+		cookie, err := r.Cookie("Authorize")
+		if err != nil {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			log.Println("No token found in header or cookie:", err)
+			return
+		}
+		tokenString = cookie.Value
+	}
+
+	log.Println("Token string:", tokenString)
 
 	// Parsear y verificar el token JWT
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
