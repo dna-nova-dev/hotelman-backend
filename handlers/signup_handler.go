@@ -46,6 +46,8 @@ func (h *SignupHandler) Handle(w http.ResponseWriter, r *http.Request) {
 		if !isValidCURP(newUser.CURP) {
 			http.Error(w, "CURP inválido", http.StatusBadRequest)
 			return
+		} else {
+			newUser.Rol = "Administracion"
 		}
 	}
 
