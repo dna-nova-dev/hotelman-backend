@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -17,6 +18,12 @@ import (
 var client *mongo.Client
 
 func main() {
+	// Crear la carpeta uploads si no existe
+	err := os.MkdirAll("uploads", os.ModePerm)
+	if err != nil {
+		log.Fatalf("Error al crear la carpeta 'uploads': %v", err)
+	}
+
 	client = config.ConnectDB() // Conecta a la base de datos MongoDB
 
 	router := mux.NewRouter()
