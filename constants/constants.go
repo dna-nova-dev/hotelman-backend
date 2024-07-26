@@ -56,7 +56,7 @@ func loadConfig() {
 		"StatusInternalServerError": "500",
 		"MongoDBURI":                "mongodb://localhost:27017",
 		"MongoDBDatabase":           "testdb",
-		"FrontendURL":               "https://hotelman-five.vercel.app",
+		"FrontendURL":               "http://localhost:3000",
 		"CollectionUsers":           "users",
 		"CollectionValidCURPs":      "valid_curps",
 		"JWTSecretKey":              "my_secret_key",
@@ -176,7 +176,7 @@ func createDefaultConfig(filename string) {
 
 	MongoDBURI = "mongodb://localhost:27017"
 	MongoDBDatabase = "testdb"
-	FrontendURL = "https://hotelman-five.vercel.app"
+	FrontendURL = "http://localhost:3000"
 
 	CollectionUsers = "users"
 	CollectionValidCURPs = "valid_curps"

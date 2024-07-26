@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 
 	"hotelman-backend/constants"
 	"hotelman-backend/models"
@@ -14,29 +15,41 @@ import (
 
 type UserHandler struct {
 	Client *mongo.Client
-	jwtKey []byte
+	JwtKey []byte
 }
 
 func NewUserHandler(client *mongo.Client, jwtKey []byte) *UserHandler {
 	return &UserHandler{
 		Client: client,
-		jwtKey: jwtKey,
+		JwtKey: jwtKey,
 	}
 }
 
 func (h *UserHandler) Handle(w http.ResponseWriter, r *http.Request) {
-	// Obtener el token de las cookies
-	cookie, err := r.Cookie("Authorize")
-	if err != nil {
+	var tokenString string
+
+	// Verificar el token en las cookies
+	if cookie, err := r.Cookie("Authorize"); err == nil {
+		tokenString = cookie.Value
+	} else {
+		// Verificar el token en el encabezado Authorization
+		authHeader := r.Header.Get("Authorization")
+		if strings.HasPrefix(authHeader, "Bearer ") {
+			tokenString = strings.TrimPrefix(authHeader, "Bearer ")
+		} else {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+	}
+
+	if tokenString == "" {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
 
-	tokenString := cookie.Value
-
 	// Parsear el token y extraer los claims
 	token, err := jwt.ParseWithClaims(tokenString, &models.Claims{}, func(token *jwt.Token) (interface{}, error) {
-		return h.jwtKey, nil
+		return h.JwtKey, nil
 	})
 	if err != nil || !token.Valid {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
