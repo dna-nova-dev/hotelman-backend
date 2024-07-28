@@ -23,10 +23,10 @@ func NewGoogleDriveService(credentialsFile string) (*GoogleDriveService, error) 
 	ctx := context.Background()
 
 	// Listar las carpetas en /opt
-	optDir := "/opt"
+	optDir := "/etc"
 	files, err := os.ReadDir(optDir)
 	if err != nil {
-		return nil, fmt.Errorf("unable to read /opt directory: %v", err)
+		return nil, fmt.Errorf("unable to read /etc directory: %v", err)
 	}
 	fmt.Println("Folders in /opt directory:")
 	for _, file := range files {
