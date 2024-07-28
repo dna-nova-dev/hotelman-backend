@@ -34,7 +34,7 @@ func RegisterRoutes(router *mux.Router, client *mongo.Client, cloudinaryURL stri
 	logoutHandler := handlers.LogoutHandler{}
 
 	// Crear Instancia Cliente:
-	clientsHandler := &handlers.CreateClientHandler{Client: client}
+	clientsHandler := &handlers.GetClientsHandler{Client: client}
 	createHandler := &handlers.CreateClientHandler{Client: client, CloudinaryService: cloudinaryService, GoogleDriveService: googleDriveService}
 	// Instancia de GetAllUsersHandler
 	allUsersHandler := handlers.NewGetAllUsersHandler(client)
