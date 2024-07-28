@@ -1,17 +1,17 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"time"
 
-	"github.com/cloudinary/cloudinary-go/v2"
 	"github.com/gorilla/mux"
-	"github.com/rs/cors" // Importa el paquete de CORS
+	"github.com/rs/cors"
 	"go.mongodb.org/mongo-driver/mongo"
 
 	"hotelman-backend/config"
-	"hotelman-backend/constants" // Importa el paquete de constantes
+	"hotelman-backend/constants"
 	"hotelman-backend/routes"
 )
 
@@ -20,18 +20,15 @@ var client *mongo.Client
 func main() {
 	client = config.ConnectDB() // Conecta a la base de datos MongoDB
 
-	// Configura Cloudinary v2
-	cloudinary, err := cloudinary.NewFromParams(constants.CloudinaryCloudName, constants.CloudinaryAPIKey, constants.CloudinaryAPISecret)
-	if err != nil {
-		log.Fatalf("Error al configurar Cloudinary: %v", err)
-	}
+	// Construye la URL de Cloudinary utilizando las constantes
+	cloudinaryURL := fmt.Sprintf("cloudinary://%s:%s@%s", constants.CloudinaryAPIKey, constants.CloudinaryAPISecret, constants.CloudinaryCloudName)
 
 	router := mux.NewRouter()
-	routes.RegisterRoutes(router, client, cloudinary) // Registra las rutas
+	routes.RegisterRoutes(router, client, cloudinaryURL) // Registra las rutas
 
 	// Configura CORS
 	c := cors.New(cors.Options{
-		AllowedOrigins:   []string{"%s", constants.FrontendURL},
+		AllowedOrigins:   []string{constants.FrontendURL},
 		AllowCredentials: true,
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Content-Type", "Authorization"},

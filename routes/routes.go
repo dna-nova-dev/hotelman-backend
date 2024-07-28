@@ -4,18 +4,28 @@ import (
 	"hotelman-backend/constants"
 	"hotelman-backend/handlers"
 	"hotelman-backend/middleware"
+	"hotelman-backend/services" // Importa el paquete de servicios
 	"net/http"
 
-	"github.com/cloudinary/cloudinary-go/v2" // Importa el paquete de Cloudinary
 	"github.com/gorilla/mux"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
 // RegisterRoutes registra todas las rutas y handlers
-func RegisterRoutes(router *mux.Router, client *mongo.Client, cloudinary *cloudinary.Cloudinary) {
+func RegisterRoutes(router *mux.Router, client *mongo.Client, cloudinaryURL string) {
+	// Crear instancia de CloudinaryService
+	cloudinaryService, err := services.NewCloudinaryService(cloudinaryURL)
+	if err != nil {
+		panic("Failed to initialize Cloudinary service: " + err.Error())
+	}
+	googleDriveService, err := services.NewGoogleDriveService(constants.GoogleDriveCredentialsPath)
+	if err != nil {
+		panic("Failed to initialize Google Drive service: " + err.Error())
+	}
+
 	// Crear instancias de los nuevos handlers
 	setupAdminHandler := &handlers.SetupAdminHandler{Client: client}
-	signupHandler := &handlers.SignupHandler{Client: client, Cloudinary: cloudinary} // Inicializa el campo Cloudinary
+	signupHandler := &handlers.SignupHandler{Client: client, CloudinaryService: cloudinaryService}
 	welcomeHandler := &handlers.WelcomeHandler{}
 	addValidCURPHandler := &handlers.AddValidCURPHandler{Client: client}
 
@@ -23,6 +33,8 @@ func RegisterRoutes(router *mux.Router, client *mongo.Client, cloudinary *cloudi
 	loginHandler := handlers.NewLoginHandler(client, []byte(constants.JWTSecretKey))
 	logoutHandler := handlers.LogoutHandler{}
 
+	// Crear Instancia Cliente:
+	createHandler := &handlers.CreateClientHandler{Client: client, CloudinaryService: cloudinaryService, GoogleDriveService: googleDriveService}
 	// Instancia de GetAllUsersHandler
 	allUsersHandler := handlers.NewGetAllUsersHandler(client)
 	userDataHandler := handlers.NewUserHandler(client, []byte(constants.JWTSecretKey))
@@ -30,9 +42,6 @@ func RegisterRoutes(router *mux.Router, client *mongo.Client, cloudinary *cloudi
 	// Crear instancia del middleware RequireAuth para roles específicos
 	requireAuthAdmin := middleware.NewRequireAuth([]byte(constants.JWTSecretKey), []string{"Administracion"})
 	requireAuthReceptionist := middleware.NewRequireAuth([]byte(constants.JWTSecretKey), []string{"Recepcionista", "Administracion"})
-
-	// Instancia de ServeProfilePictureHandler
-	serveProfilePictureHandler := handlers.NewServeProfilePictureHandler(client, []byte(constants.JWTSecretKey), cloudinary)
 
 	// Endpoints utilizando los nuevos handlers
 	router.HandleFunc("/setup", setupAdminHandler.Handle).Methods("POST")
@@ -47,7 +56,5 @@ func RegisterRoutes(router *mux.Router, client *mongo.Client, cloudinary *cloudi
 	// Endpoint protegido utilizando el middleware RequireAuth para recepcionistas y administradores
 	router.Handle("/all-users", requireAuthReceptionist.Middleware(http.HandlerFunc(allUsersHandler.Handle))).Methods("GET")
 	router.Handle("/user", requireAuthReceptionist.Middleware(http.HandlerFunc(userDataHandler.Handle))).Methods("GET")
-
-	// Endpoint para obtener la imagen de perfil
-	router.Handle("/profile-picture", requireAuthReceptionist.Middleware(http.HandlerFunc(serveProfilePictureHandler.ServeHTTP))).Methods("GET")
+	router.HandleFunc("/create-client", createHandler.Handle).Methods("POST")
 }

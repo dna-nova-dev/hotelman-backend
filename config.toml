@@ -24,3 +24,5 @@
 	CloudinaryCloudName = "your-cloudinary-cloud-name"
 	CloudinaryAPIKey = "your-cloudinary-api-key"
 	CloudinaryAPISecret = "your-cloudinary-api-secret"
+	GoogleDriveFolderID = "1jksEqpqaKbf_bU-ZdxJiBX_4HFhr1Bj_"
+	GoogleDriveCredentialsPath = "credentials.json"

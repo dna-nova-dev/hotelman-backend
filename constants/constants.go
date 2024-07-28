@@ -28,6 +28,7 @@ var (
 	// Collections
 	CollectionUsers      string
 	CollectionValidCURPs string
+	CollectionClients    string
 
 	// JWT
 	JWTSecretKey string
@@ -41,6 +42,10 @@ var (
 	CloudinaryAPIKey    string
 	CloudinaryAPISecret string
 
+	// Google Drive
+	GoogleDriveFolderID        string
+	GoogleDriveCredentialsPath string
+
 	// AllCollections contiene todos los nombres de colecciones definidos
 	AllCollections []string
 )
@@ -52,24 +57,27 @@ func init() {
 func loadConfig() {
 	// Variables por defecto
 	defaultConfig := map[string]string{
-		"RoleAdmin":                 "Administrator",
-		"RoleReceptionist":          "Receptionist",
-		"StatusCreated":             "201",
-		"StatusBadRequest":          "400",
-		"StatusUnauthorized":        "401",
-		"StatusForbidden":           "403",
-		"StatusInternalServerError": "500",
-		"MongoDBURI":                "mongodb://localhost:27017",
-		"MongoDBDatabase":           "testdb",
-		"FrontendURL":               "http://localhost:3000",
-		"CollectionUsers":           "users",
-		"CollectionValidCURPs":      "valid_curps",
-		"JWTSecretKey":              "my_secret_key",
-		"ServerAddress":             "0.0.0.0",
-		"ServerPort":                "8000",
-		"CloudinaryCloudName":       "your-cloudinary-cloud-name",
-		"CloudinaryAPIKey":          "your-cloudinary-api-key",
-		"CloudinaryAPISecret":       "your-cloudinary-api-secret",
+		"RoleAdmin":                  "Administrator",
+		"RoleReceptionist":           "Receptionist",
+		"StatusCreated":              "201",
+		"StatusBadRequest":           "400",
+		"StatusUnauthorized":         "401",
+		"StatusForbidden":            "403",
+		"StatusInternalServerError":  "500",
+		"MongoDBURI":                 "mongodb://localhost:27017",
+		"MongoDBDatabase":            "testdb",
+		"FrontendURL":                "http://localhost:3000",
+		"CollectionUsers":            "users",
+		"CollectionValidCURPs":       "valid_curps",
+		"CollectionClients":          "clients",
+		"JWTSecretKey":               "my_secret_key",
+		"ServerAddress":              "0.0.0.0",
+		"ServerPort":                 "8000",
+		"CloudinaryCloudName":        "your-cloudinary-cloud-name",
+		"CloudinaryAPIKey":           "your-cloudinary-api-key",
+		"CloudinaryAPISecret":        "your-cloudinary-api-secret",
+		"GoogleDriveFolderID":        "your-google-drive-folder-id",
+		"GoogleDriveCredentialsPath": "credentials.json",
 	}
 
 	// Intentar cargar desde variables de entorno
@@ -91,9 +99,10 @@ func allEnvVariablesSet(config map[string]string) bool {
 	requiredKeys := []string{
 		"RoleAdmin", "RoleReceptionist", "StatusCreated", "StatusBadRequest",
 		"StatusUnauthorized", "StatusForbidden", "StatusInternalServerError",
-		"MongoDBURI", "MongoDBDatabase", "FrontendURL", "CollectionUsers", "CollectionValidCURPs",
+		"MongoDBURI", "MongoDBDatabase", "FrontendURL", "CollectionUsers", "CollectionValidCURPs", "CollectionClients",
 		"JWTSecretKey", "ServerAddress", "ServerPort",
 		"CloudinaryCloudName", "CloudinaryAPIKey", "CloudinaryAPISecret",
+		"GoogleDriveFolderID", "GoogleDriveCredentialsPath",
 	}
 
 	for _, key := range requiredKeys {
@@ -135,12 +144,15 @@ func loadFromToml(config map[string]string) {
 	config["FrontendURL"] = Config.Constants.FrontendURL
 	config["CollectionUsers"] = Config.Constants.CollectionUsers
 	config["CollectionValidCURPs"] = Config.Constants.CollectionValidCURPs
+	config["CollectionClients"] = Config.Constants.CollectionClients
 	config["JWTSecretKey"] = Config.Constants.JWTSecretKey
 	config["ServerAddress"] = Config.Constants.ServerAddress
 	config["ServerPort"] = Config.Constants.ServerPort
 	config["CloudinaryCloudName"] = Config.Constants.CloudinaryCloudName
 	config["CloudinaryAPIKey"] = Config.Constants.CloudinaryAPIKey
 	config["CloudinaryAPISecret"] = Config.Constants.CloudinaryAPISecret
+	config["GoogleDriveFolderID"] = Config.Constants.GoogleDriveFolderID
+	config["GoogleDriveCredentialsPath"] = Config.Constants.GoogleDriveCredentialsPath
 }
 
 func assignConfigValues(config map[string]string) {
@@ -159,6 +171,7 @@ func assignConfigValues(config map[string]string) {
 
 	CollectionUsers = config["CollectionUsers"]
 	CollectionValidCURPs = config["CollectionValidCURPs"]
+	CollectionClients = config["CollectionClients"]
 
 	JWTSecretKey = config["JWTSecretKey"]
 
@@ -170,10 +183,15 @@ func assignConfigValues(config map[string]string) {
 	CloudinaryAPIKey = config["CloudinaryAPIKey"]
 	CloudinaryAPISecret = config["CloudinaryAPISecret"]
 
+	// Google Drive
+	GoogleDriveFolderID = config["GoogleDriveFolderID"]
+	GoogleDriveCredentialsPath = config["GoogleDriveCredentialsPath"]
+
 	// Inicializar AllCollections con las colecciones definidas individualmente
 	AllCollections = []string{
 		CollectionUsers,
 		CollectionValidCURPs,
+		CollectionClients,
 	}
 }
 
@@ -197,6 +215,7 @@ func createDefaultConfig(filename string) {
 
 	CollectionUsers = "users"
 	CollectionValidCURPs = "valid_curps"
+	CollectionClients = "clients"
 
 	JWTSecretKey = "my_secret_key"
 
@@ -206,6 +225,9 @@ func createDefaultConfig(filename string) {
 	CloudinaryCloudName = "your-cloudinary-cloud-name"
 	CloudinaryAPIKey = "your-cloudinary-api-key"
 	CloudinaryAPISecret = "your-cloudinary-api-secret"
+
+	GoogleDriveFolderID = "your-google-drive-folder-id"
+	GoogleDriveCredentialsPath = "credentials.json"
 	`
 
 	// Crear el archivo config.toml con los valores predeterminados
@@ -246,6 +268,7 @@ type Constants struct {
 
 	CollectionUsers      string `toml:"CollectionUsers"`
 	CollectionValidCURPs string `toml:"CollectionValidCURPs"`
+	CollectionClients    string `toml:"CollectionClients"`
 
 	JWTSecretKey string `toml:"JWTSecretKey"`
 
@@ -255,7 +278,9 @@ type Constants struct {
 	CloudinaryCloudName string `toml:"CloudinaryCloudName"`
 	CloudinaryAPIKey    string `toml:"CloudinaryAPIKey"`
 	CloudinaryAPISecret string `toml:"CloudinaryAPISecret"`
+
+	GoogleDriveFolderID        string `toml:"GoogleDriveFolderID"`
+	GoogleDriveCredentialsPath string `toml:"GoogleDriveCredentialsPath"`
 }
 
-// Config contiene las constantes del archivo TOML
 var Config ConfigFile
