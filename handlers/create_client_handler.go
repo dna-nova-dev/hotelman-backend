@@ -3,13 +3,17 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"hotelman-backend/constants"
 	"hotelman-backend/models"
 	"hotelman-backend/services"
+
+	"github.com/google/uuid"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -89,12 +93,14 @@ func (h *CreateClientHandler) createRental(w http.ResponseWriter, r *http.Reques
 }
 
 func (h *CreateClientHandler) createGuest(w http.ResponseWriter, r *http.Request) {
+	// Generar ID personalizado
+	customID := generateCustomID(r.FormValue("hair"), r.FormValue("roomNumber"))
+
 	guest := models.Guest{
 		ID:               primitive.NewObjectID(),
-		Email:            r.FormValue("email"),
-		Phone:            r.FormValue("phone"),
+		CustomID:         customID, // Asignar el ID personalizado
 		ExtraDescription: r.FormValue("extraDescription"),
-		Name:             r.FormValue("name"),
+		Hair:             r.FormValue("hair"),
 		Height:           r.FormValue("height"),
 		RoomNumber:       r.FormValue("roomNumber"),
 		Price:            parseFloat(r.FormValue("price")),
@@ -112,6 +118,35 @@ func (h *CreateClientHandler) createGuest(w http.ResponseWriter, r *http.Request
 
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(guest)
+}
+
+// generateCustomID genera un ID personalizado en formato CURP
+func generateCustomID(hair string, roomNumber string) string {
+	// Generar un UUID y tomar solo los primeros 8 caracteres para reducir el tamaño
+	uuidPart := uuid.New().String()[:8]
+
+	// Convertir el tipo de cabello y el número de habitación a una forma de cadena
+	// Eliminar espacios del tipo de cabello y convertir a mayúsculas
+	hairPart := strings.ToUpper(strings.ReplaceAll(hair, " ", ""))
+	roomNumberPart := strings.ToUpper(strings.ReplaceAll(roomNumber, " ", ""))
+
+	// Asegurar que el hairPart y roomNumberPart tengan longitud fija para simular el formato CURP
+	if len(hairPart) > 2 {
+		hairPart = hairPart[:2]
+	}
+	if len(roomNumberPart) > 2 {
+		roomNumberPart = roomNumberPart[:2]
+	}
+
+	// Combinar los datos con el UUID para crear el ID personalizado
+	customID := fmt.Sprintf("%s%s%s", hairPart, roomNumberPart, uuidPart)
+
+	// Limitar la longitud del ID a 18 caracteres para aproximarse al formato CURP
+	if len(customID) > 18 {
+		customID = customID[:18]
+	}
+
+	return customID
 }
 
 func parseFloat(value string) float64 {

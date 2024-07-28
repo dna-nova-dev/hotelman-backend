@@ -34,6 +34,7 @@ func RegisterRoutes(router *mux.Router, client *mongo.Client, cloudinaryURL stri
 	logoutHandler := handlers.LogoutHandler{}
 
 	// Crear Instancia Cliente:
+	clientsHandler := &handlers.CreateClientHandler{Client: client}
 	createHandler := &handlers.CreateClientHandler{Client: client, CloudinaryService: cloudinaryService, GoogleDriveService: googleDriveService}
 	// Instancia de GetAllUsersHandler
 	allUsersHandler := handlers.NewGetAllUsersHandler(client)
@@ -57,4 +58,5 @@ func RegisterRoutes(router *mux.Router, client *mongo.Client, cloudinaryURL stri
 	router.Handle("/all-users", requireAuthReceptionist.Middleware(http.HandlerFunc(allUsersHandler.Handle))).Methods("GET")
 	router.Handle("/user", requireAuthReceptionist.Middleware(http.HandlerFunc(userDataHandler.Handle))).Methods("GET")
 	router.HandleFunc("/create-client", createHandler.Handle).Methods("POST")
+	router.HandleFunc("/clients", clientsHandler.Handle).Methods("GET")
 }

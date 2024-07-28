@@ -6,13 +6,12 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-// Guest representa un huésped en el sistema
 type Guest struct {
-	ID               primitive.ObjectID `bson:"_id" json:"id"` // El ID es obligatorio
-	Email            string             `bson:"email" json:"email"`
-	Phone            string             `bson:"phone" json:"phone"`
+	ID               primitive.ObjectID `bson:"_id" json:"id"`
+	CustomID         string             `bson:"customID" json:"customID"` // ID personalizado
 	ExtraDescription string             `bson:"extraDescription" json:"extraDescription"`
 	Name             string             `bson:"name" json:"name"`
+	Hair             string             `bson:"hair" json:"hair"`
 	Height           string             `bson:"height" json:"height"`
 	RoomNumber       string             `bson:"roomNumber" json:"roomNumber"`
 	Price            float64            `bson:"price" json:"price"`
