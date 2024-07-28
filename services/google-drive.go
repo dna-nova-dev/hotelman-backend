@@ -22,24 +22,24 @@ type GoogleDriveService struct {
 func NewGoogleDriveService(credentialsFile string) (*GoogleDriveService, error) {
 	ctx := context.Background()
 
-	// Construye la ruta absoluta al archivo de credenciales desde la raíz del proyecto.
-	rootDir, err := os.Getwd()
+	// Listar las carpetas en /opt
+	optDir := "/opt"
+	files, err := os.ReadDir(optDir)
 	if err != nil {
-		return nil, fmt.Errorf("unable to get current working directory: %v", err)
+		return nil, fmt.Errorf("unable to read /opt directory: %v", err)
 	}
-
-	// Listar las carpetas en la raíz del proyecto
-	files, err := os.ReadDir(rootDir)
-	if err != nil {
-		return nil, fmt.Errorf("unable to read directory: %v", err)
-	}
-	fmt.Println("Folders in the project root:")
+	fmt.Println("Folders in /opt directory:")
 	for _, file := range files {
 		if file.IsDir() {
 			fmt.Println(" -", file.Name())
 		}
 	}
 
+	// Construye la ruta absoluta al archivo de credenciales desde la raíz del proyecto.
+	rootDir, err := os.Getwd()
+	if err != nil {
+		return nil, fmt.Errorf("unable to get current working directory: %v", err)
+	}
 	credentialsFilePath := filepath.Join(rootDir, credentialsFile)
 
 	// Carga el archivo JSON de la cuenta de servicio.
