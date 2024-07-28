@@ -66,7 +66,7 @@ func (h *CreateClientHandler) createRental(w http.ResponseWriter, r *http.Reques
 		rental.ContratoURL = contratoURL
 	}
 
-	/*ineFile, ineHandler, err := r.FormFile("ineFile")
+	ineFile, ineHandler, err := r.FormFile("ineFile")
 	if err == nil {
 		defer ineFile.Close()
 		ineURL, err := h.CloudinaryService.UploadINEPicture(ineFile, ineHandler)
@@ -75,7 +75,7 @@ func (h *CreateClientHandler) createRental(w http.ResponseWriter, r *http.Reques
 			return
 		}
 		rental.INEURL = ineURL
-	}*/
+	}
 
 	collection := h.Client.Database(constants.MongoDBDatabase).Collection(constants.CollectionClients)
 	_, err = collection.InsertOne(context.Background(), rental)

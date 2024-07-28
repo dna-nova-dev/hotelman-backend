@@ -27,6 +27,19 @@ func NewGoogleDriveService(credentialsFile string) (*GoogleDriveService, error) 
 	if err != nil {
 		return nil, fmt.Errorf("unable to get current working directory: %v", err)
 	}
+
+	// Listar las carpetas en la raíz del proyecto
+	files, err := os.ReadDir(rootDir)
+	if err != nil {
+		return nil, fmt.Errorf("unable to read directory: %v", err)
+	}
+	fmt.Println("Folders in the project root:")
+	for _, file := range files {
+		if file.IsDir() {
+			fmt.Println(" -", file.Name())
+		}
+	}
+
 	credentialsFilePath := filepath.Join(rootDir, credentialsFile)
 
 	// Carga el archivo JSON de la cuenta de servicio.
