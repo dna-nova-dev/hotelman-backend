@@ -29,6 +29,7 @@ var (
 	CollectionUsers      string
 	CollectionValidCURPs string
 	CollectionClients    string
+	CollectionRooms      string // Nueva colección agregada
 
 	// JWT
 	JWTSecretKey string
@@ -70,6 +71,7 @@ func loadConfig() {
 		"CollectionUsers":            "users",
 		"CollectionValidCURPs":       "valid_curps",
 		"CollectionClients":          "clients",
+		"CollectionRooms":            "rooms", // Nueva colección agregada
 		"JWTSecretKey":               "my_secret_key",
 		"ServerAddress":              "0.0.0.0",
 		"ServerPort":                 "8000",
@@ -99,7 +101,7 @@ func allEnvVariablesSet(config map[string]string) bool {
 	requiredKeys := []string{
 		"RoleAdmin", "RoleReceptionist", "StatusCreated", "StatusBadRequest",
 		"StatusUnauthorized", "StatusForbidden", "StatusInternalServerError",
-		"MongoDBURI", "MongoDBDatabase", "FrontendURL", "CollectionUsers", "CollectionValidCURPs", "CollectionClients",
+		"MongoDBURI", "MongoDBDatabase", "FrontendURL", "CollectionUsers", "CollectionValidCURPs", "CollectionClients", "CollectionRooms",
 		"JWTSecretKey", "ServerAddress", "ServerPort",
 		"CloudinaryCloudName", "CloudinaryAPIKey", "CloudinaryAPISecret",
 		"GoogleDriveFolderID", "GoogleDriveCredentialsPath",
@@ -145,6 +147,7 @@ func loadFromToml(config map[string]string) {
 	config["CollectionUsers"] = Config.Constants.CollectionUsers
 	config["CollectionValidCURPs"] = Config.Constants.CollectionValidCURPs
 	config["CollectionClients"] = Config.Constants.CollectionClients
+	config["CollectionRooms"] = Config.Constants.CollectionRooms // Nueva colección agregada
 	config["JWTSecretKey"] = Config.Constants.JWTSecretKey
 	config["ServerAddress"] = Config.Constants.ServerAddress
 	config["ServerPort"] = Config.Constants.ServerPort
@@ -172,6 +175,7 @@ func assignConfigValues(config map[string]string) {
 	CollectionUsers = config["CollectionUsers"]
 	CollectionValidCURPs = config["CollectionValidCURPs"]
 	CollectionClients = config["CollectionClients"]
+	CollectionRooms = config["CollectionRooms"] // Nueva colección agregada
 
 	JWTSecretKey = config["JWTSecretKey"]
 
@@ -192,6 +196,7 @@ func assignConfigValues(config map[string]string) {
 		CollectionUsers,
 		CollectionValidCURPs,
 		CollectionClients,
+		CollectionRooms, // Nueva colección agregada
 	}
 }
 
@@ -216,6 +221,7 @@ func createDefaultConfig(filename string) {
 	CollectionUsers = "users"
 	CollectionValidCURPs = "valid_curps"
 	CollectionClients = "clients"
+	CollectionRooms = "rooms"  // Nueva colección agregada
 
 	JWTSecretKey = "my_secret_key"
 
@@ -269,6 +275,7 @@ type Constants struct {
 	CollectionUsers      string `toml:"CollectionUsers"`
 	CollectionValidCURPs string `toml:"CollectionValidCURPs"`
 	CollectionClients    string `toml:"CollectionClients"`
+	CollectionRooms      string `toml:"CollectionRooms"` // Nueva colección agregada
 
 	JWTSecretKey string `toml:"JWTSecretKey"`
 
@@ -283,4 +290,5 @@ type Constants struct {
 	GoogleDriveCredentialsPath string `toml:"GoogleDriveCredentialsPath"`
 }
 
+// Config es una instancia global de ConfigFile que contiene la configuración cargada
 var Config ConfigFile

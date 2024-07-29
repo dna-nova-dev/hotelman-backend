@@ -40,6 +40,12 @@ func RegisterRoutes(router *mux.Router, client *mongo.Client, cloudinaryURL stri
 	allUsersHandler := handlers.NewGetAllUsersHandler(client)
 	userDataHandler := handlers.NewUserHandler(client, []byte(constants.JWTSecretKey))
 
+	// Instancia de Room Handler
+	roomHandler := &handlers.RoomHandler{Client: client}
+
+	// Instancia de Analytics handler
+	analyticsHandler := &handlers.AnalyticsHandler{Client: client}
+
 	// Crear instancia del middleware RequireAuth para roles específicos
 	requireAuthAdmin := middleware.NewRequireAuth([]byte(constants.JWTSecretKey), []string{"Administracion"})
 	requireAuthReceptionist := middleware.NewRequireAuth([]byte(constants.JWTSecretKey), []string{"Recepcionista", "Administracion"})
@@ -59,4 +65,13 @@ func RegisterRoutes(router *mux.Router, client *mongo.Client, cloudinaryURL stri
 	router.Handle("/user", requireAuthReceptionist.Middleware(http.HandlerFunc(userDataHandler.Handle))).Methods("GET")
 	router.HandleFunc("/create-client", createHandler.Handle).Methods("POST")
 	router.HandleFunc("/clients", clientsHandler.Handle).Methods("GET")
+
+	// Endpoint rooms
+	router.HandleFunc("/rooms", roomHandler.CreateRoomHandler).Methods("POST")
+	router.HandleFunc("/rooms/status", roomHandler.UpdateRoomStatusHandler).Methods("PUT")
+	router.HandleFunc("/rooms/occupant", roomHandler.GetRoomOccupantHandler).Methods("GET")
+	router.HandleFunc("/rooms/assign", roomHandler.AssignOccupantHandler).Methods("PUT")
+
+	// Endpoint analytics
+	router.HandleFunc("/analytics", analyticsHandler.GetAnalyticsHandler).Methods("GET")
 }
