@@ -16,6 +16,7 @@ type Guest struct {
 	RoomNumber       string             `bson:"roomNumber" json:"roomNumber"`
 	Price            float64            `bson:"price" json:"price"`
 	Duration         int                `bson:"duration" json:"duration"`
+	History          []HistoryRecord    `bson:"history" json:"history"`
 	CreatedAt        time.Time          `bson:"createdAt" json:"createdAt"`
 	UpdatedAt        time.Time          `bson:"updatedAt" json:"updatedAt"`
 }

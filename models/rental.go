@@ -17,6 +17,7 @@ type Rental struct {
 	RoomNumber    string             `bson:"RoomNumber" json:"RoomNumber"`
 	ContratoURL   string             `bson:"contratoUrl" json:"contratoUrl"` // URL del contrato
 	INEURL        string             `bson:"ineUrl" json:"ineUrl"`           // URL del INE
+	History       []HistoryRecord    `bson:"history" json:"history"`
 	CreatedAt     time.Time          `bson:"createdAt" json:"createdAt"`
 	UpdatedAt     time.Time          `bson:"updatedAt" json:"updatedAt"`
 }

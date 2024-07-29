@@ -1,3 +1,5 @@
+// src/handlers/GetClientsHandler.go
+
 package handlers
 
 import (
@@ -19,6 +21,7 @@ type GetClientsHandler struct {
 
 func (h *GetClientsHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	clientType := r.URL.Query().Get("type")
+	search := r.URL.Query().Get("search")
 	pageStr := r.URL.Query().Get("page")
 	pageSizeStr := r.URL.Query().Get("pageSize")
 
@@ -36,14 +39,16 @@ func (h *GetClientsHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	limit := int64(pageSize)
 
 	filter := bson.M{}
-	switch clientType {
-	case "rental":
-		filter = bson.M{"nombres": bson.M{"$exists": true}} // Filter to check for rentals
-	case "guest":
-		filter = bson.M{"customID": bson.M{"$exists": true}} // Filter to check for guests
-	default:
-		http.Error(w, "Invalid client type", http.StatusBadRequest)
-		return
+	if search != "" {
+		switch clientType {
+		case "rental":
+			filter = bson.M{"nombres": bson.M{"$regex": search, "$options": "i"}} // Case insensitive search for rentals
+		case "guest":
+			filter = bson.M{"customID": bson.M{"$regex": search, "$options": "i"}} // Case insensitive search for guests
+		default:
+			http.Error(w, "Invalid client type", http.StatusBadRequest)
+			return
+		}
 	}
 
 	collection := h.Client.Database(constants.MongoDBDatabase).Collection(constants.CollectionClients)
@@ -61,6 +66,20 @@ func (h *GetClientsHandler) Handle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Obtener el total de documentos para la paginación
+	totalDocs, err := collection.CountDocuments(context.Background(), filter)
+	if err != nil {
+		http.Error(w, "Failed to count documents", http.StatusInternalServerError)
+		return
+	}
+
+	totalPages := (totalDocs + int64(pageSize) - 1) / int64(pageSize) // Calcular el número total de páginas
+
+	response := map[string]interface{}{
+		"clients":    clients,
+		"totalPages": totalPages,
+	}
+
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(clients)
+	json.NewEncoder(w).Encode(response)
 }
