@@ -3,11 +3,14 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"log"
 	"net/http"
 
 	"hotelman-backend/constants"
 	"hotelman-backend/models"
 	"hotelman-backend/services"
+	"hotelman-backend/utils"
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"golang.org/x/crypto/bcrypt"
@@ -62,21 +65,31 @@ func (h *SignupHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	file, handler, err := r.FormFile("profilePicture")
 	if err == nil {
 		defer file.Close()
+		var profilePictureURL string
 		if constants.StorageSelector == "local" {
-			profilePictureURL, err := h.LocalFileSystemService.UploadFileImage(file, handler)
+			profilePictureURL, err = h.LocalFileSystemService.UploadFileImage(file, handler)
 			if err != nil {
 				http.Error(w, "Error al guardar la imagen de perfil localmente", http.StatusInternalServerError)
 				return
 			}
-			newUser.ProfilePicture = profilePictureURL
 		} else {
-			profilePictureURL, err := h.CloudinaryService.UploadProfilePicture(file, handler)
+			profilePictureURL, err = h.CloudinaryService.UploadProfilePicture(file, handler)
 			if err != nil {
 				http.Error(w, "Error al guardar la imagen de perfil en la nube", http.StatusInternalServerError)
 				return
 			}
-			newUser.ProfilePicture = profilePictureURL
 		}
+
+		// Obtener la IP pública del servidor
+		publicIP, err := utils.GetPublicIP()
+		if err != nil {
+			log.Printf("Error obteniendo la IP pública: %v", err)
+			http.Error(w, "Error interno del servidor", http.StatusInternalServerError)
+			return
+		}
+
+		// Construir la URL completa de la imagen de perfil
+		newUser.ProfilePicture = fmt.Sprintf("http://%s:8000/serve/%s", publicIP, profilePictureURL)
 	} else {
 		newUser.ProfilePicture = ""
 	}

@@ -6,6 +6,7 @@ import (
 	"mime/multipart"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 // LocalFileSystemService es un servicio para manejar archivos en el sistema de archivos local
@@ -73,7 +74,8 @@ func (l *LocalFileSystemService) UploadFilePDF(file multipart.File, handler *mul
 	}
 
 	fmt.Printf("PDF file uploaded successfully: %s\n", filePath)
-	return filePath, nil
+	relativePath := strings.TrimPrefix(filePath, l.BasePath+"/")
+	return relativePath, nil
 }
 
 // UploadFileImage maneja la carga de archivos de imagen al sistema de archivos local
@@ -103,5 +105,6 @@ func (l *LocalFileSystemService) UploadFileImage(file multipart.File, handler *m
 	}
 
 	fmt.Printf("Image file uploaded successfully: %s\n", filePath)
-	return filePath, nil
+	relativePath := strings.TrimPrefix(filePath, l.BasePath+"/")
+	return relativePath, nil
 }
