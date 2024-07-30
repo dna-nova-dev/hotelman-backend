@@ -36,17 +36,27 @@ func (h *GetClientsHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	skip := (page - 1) * pageSize
 	limit := int64(pageSize)
 
-	filter := bson.M{}
+	var filter bson.M
 	if search != "" {
-		filter["$or"] = []bson.M{
-			{"nombres": bson.M{"$regex": search, "$options": "i"}},  // Case insensitive search for rentals
-			{"customID": bson.M{"$regex": search, "$options": "i"}}, // Case insensitive search for guests
+		switch clientType {
+		case "rental":
+			filter = bson.M{"nombres": bson.M{"$regex": search, "$options": "i"}} // Case insensitive search for rentals
+		case "guest":
+			filter = bson.M{"customID": bson.M{"$regex": search, "$options": "i"}} // Case insensitive search for guests
+		default:
+			http.Error(w, "Invalid client type", http.StatusBadRequest)
+			return
 		}
-	}
-
-	// Agregar filtro por tipo de cliente
-	if clientType != "" {
-		filter["type"] = clientType
+	} else {
+		switch clientType {
+		case "rental":
+			filter = bson.M{"nombres": bson.M{"$exists": true}} // Ensures we are looking at rentals
+		case "guest":
+			filter = bson.M{"customID": bson.M{"$exists": true}} // Ensures we are looking at guests
+		default:
+			http.Error(w, "Invalid client type", http.StatusBadRequest)
+			return
+		}
 	}
 
 	collection := h.Client.Database(constants.MongoDBDatabase).Collection(constants.CollectionClients)
