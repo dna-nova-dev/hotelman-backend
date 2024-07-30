@@ -53,7 +53,7 @@ func (h *CreateClientHandler) createRental(w http.ResponseWriter, r *http.Reques
 		Apellidos:     r.FormValue("apellidos"),
 		Correo:        r.FormValue("correo"),
 		NumeroCelular: r.FormValue("numeroCelular"),
-		INEString:     r.FormValue("INEString"),
+		CURP:          r.FormValue("curp"),
 		RoomNumber:    r.FormValue("RoomNumber"),
 		CreatedAt:     time.Now(),
 		UpdatedAt:     time.Now(),

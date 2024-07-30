@@ -13,7 +13,7 @@ type Rental struct {
 	Apellidos     string             `bson:"apellidos" json:"apellidos"`
 	Correo        string             `bson:"correo" json:"correo"`
 	NumeroCelular string             `bson:"numeroCelular" json:"numeroCelular"`
-	INEString     string             `bson:"INEString" json:"INEString"`
+	CURP          string             `bson:"curp" json:"curp"`
 	RoomNumber    string             `bson:"RoomNumber" json:"RoomNumber"`
 	ContratoURL   string             `bson:"contratoUrl" json:"contratoUrl"` // URL del contrato
 	INEURL        string             `bson:"ineUrl" json:"ineUrl"`           // URL del INE
