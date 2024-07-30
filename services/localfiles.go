@@ -43,7 +43,7 @@ func (l *LocalFileSystemService) UploadFilePDF(file multipart.File, handler *mul
 	}
 
 	// Crea la ruta completa del archivo
-	filePath := filepath.Join(l.BasePath, handler.Filename)
+	filePath := filepath.Join(l.BasePath+"/documents", handler.Filename)
 
 	// Crea el archivo en el sistema de archivos local
 	dst, err := os.Create(filePath)
@@ -67,7 +67,7 @@ func (l *LocalFileSystemService) UploadFileImage(file multipart.File, handler *m
 	fmt.Println("Starting image file upload to local file system")
 
 	// Verifica que el archivo sea una imagen (opcional, puedes agregar más tipos de archivos de imagen si lo deseas)
-	ext := filepath.Ext(handler.Filename)
+	ext := filepath.Ext(handler.Filename + "/images")
 	if ext != ".jpg" && ext != ".jpeg" && ext != ".png" && ext != ".gif" {
 		return "", fmt.Errorf("file is not a supported image format")
 	}
