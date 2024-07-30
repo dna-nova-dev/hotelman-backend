@@ -1,12 +1,11 @@
 package handlers
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
-
-	"github.com/gorilla/mux"
 )
 
 type ServeFileHandler struct {
@@ -14,13 +13,23 @@ type ServeFileHandler struct {
 }
 
 func (h *ServeFileHandler) Handle(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	folder := vars["folder"]
-	filename := vars["filename"]
+	// Obtener los parámetros de consulta
+	folder := r.URL.Query().Get("folder")
+	filename := r.URL.Query().Get("filename")
+
+	fmt.Println("UploadsDir: " + h.UploadsDir)
 
 	// Log para debuggear los valores de folder y filename
 	fmt.Printf("Requested folder: %s\n", folder)
 	fmt.Printf("Requested filename: %s\n", filename)
+
+	// Verificar si folder o filename no están especificados
+	if folder == "" || filename == "" {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": "No folder or filename specified"})
+		return
+	}
 
 	// Validar que el folder sea "images" o "documents"
 	if folder != "images" && folder != "documents" {
