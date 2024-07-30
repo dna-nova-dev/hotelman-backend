@@ -1,5 +1,3 @@
-// src/handlers/GetClientsHandler.go
-
 package handlers
 
 import (
@@ -40,15 +38,15 @@ func (h *GetClientsHandler) Handle(w http.ResponseWriter, r *http.Request) {
 
 	filter := bson.M{}
 	if search != "" {
-		switch clientType {
-		case "rental":
-			filter = bson.M{"nombres": bson.M{"$regex": search, "$options": "i"}} // Case insensitive search for rentals
-		case "guest":
-			filter = bson.M{"customID": bson.M{"$regex": search, "$options": "i"}} // Case insensitive search for guests
-		default:
-			http.Error(w, "Invalid client type", http.StatusBadRequest)
-			return
+		filter["$or"] = []bson.M{
+			{"nombres": bson.M{"$regex": search, "$options": "i"}},  // Case insensitive search for rentals
+			{"customID": bson.M{"$regex": search, "$options": "i"}}, // Case insensitive search for guests
 		}
+	}
+
+	// Agregar filtro por tipo de cliente
+	if clientType != "" {
+		filter["type"] = clientType
 	}
 
 	collection := h.Client.Database(constants.MongoDBDatabase).Collection(constants.CollectionClients)
@@ -78,6 +76,7 @@ func (h *GetClientsHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	response := map[string]interface{}{
 		"clients":    clients,
 		"totalPages": totalPages,
+		"type":       clientType, // Agregar el tipo de cliente a la respuesta
 	}
 
 	w.Header().Set("Content-Type", "application/json")
