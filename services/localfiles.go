@@ -13,7 +13,7 @@ type LocalFileSystemService struct {
 	BasePath string
 }
 
-// / NewLocalFileSystemService crea una nueva instancia de LocalFileSystemService
+// NewLocalFileSystemService crea una nueva instancia de LocalFileSystemService
 func NewLocalFileSystemService(relativePath string) (*LocalFileSystemService, error) {
 	// Obtener la ruta raíz del programa
 	rootPath, err := os.Getwd()
@@ -30,6 +30,20 @@ func NewLocalFileSystemService(relativePath string) (*LocalFileSystemService, er
 		return nil, fmt.Errorf("unable to create base directory: %v", err)
 	}
 
+	// Asegúrate de que las subcarpetas "documents" e "images" existan
+	documentsPath := filepath.Join(basePath, "documents")
+	imagesPath := filepath.Join(basePath, "images")
+
+	err = os.MkdirAll(documentsPath, os.ModePerm)
+	if err != nil {
+		return nil, fmt.Errorf("unable to create documents directory: %v", err)
+	}
+
+	err = os.MkdirAll(imagesPath, os.ModePerm)
+	if err != nil {
+		return nil, fmt.Errorf("unable to create images directory: %v", err)
+	}
+
 	return &LocalFileSystemService{BasePath: basePath}, nil
 }
 
@@ -43,7 +57,7 @@ func (l *LocalFileSystemService) UploadFilePDF(file multipart.File, handler *mul
 	}
 
 	// Crea la ruta completa del archivo
-	filePath := filepath.Join(l.BasePath+"/documents", handler.Filename)
+	filePath := filepath.Join(l.BasePath, "documents", handler.Filename)
 
 	// Crea el archivo en el sistema de archivos local
 	dst, err := os.Create(filePath)
@@ -67,13 +81,13 @@ func (l *LocalFileSystemService) UploadFileImage(file multipart.File, handler *m
 	fmt.Println("Starting image file upload to local file system")
 
 	// Verifica que el archivo sea una imagen (opcional, puedes agregar más tipos de archivos de imagen si lo deseas)
-	ext := filepath.Ext(handler.Filename + "/images")
+	ext := filepath.Ext(handler.Filename)
 	if ext != ".jpg" && ext != ".jpeg" && ext != ".png" && ext != ".gif" {
 		return "", fmt.Errorf("file is not a supported image format")
 	}
 
 	// Crea la ruta completa del archivo
-	filePath := filepath.Join(l.BasePath, handler.Filename)
+	filePath := filepath.Join(l.BasePath, "images", handler.Filename)
 
 	// Crea el archivo en el sistema de archivos local
 	dst, err := os.Create(filePath)
