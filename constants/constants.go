@@ -47,6 +47,12 @@ var (
 	GoogleDriveFolderID        string
 	GoogleDriveCredentialsPath string
 
+	// Local File System
+	LocalFileSystemFolder string
+
+	// Storage Selector
+	StorageSelector string
+
 	// AllCollections contiene todos los nombres de colecciones definidos
 	AllCollections []string
 )
@@ -80,6 +86,8 @@ func loadConfig() {
 		"CloudinaryAPISecret":        "your-cloudinary-api-secret",
 		"GoogleDriveFolderID":        "your-google-drive-folder-id",
 		"GoogleDriveCredentialsPath": "credentials.json",
+		"LocalFileSystemFolder":      "/uploads",
+		"StorageSelector":            "local",
 	}
 
 	// Intentar cargar desde variables de entorno
@@ -104,7 +112,7 @@ func allEnvVariablesSet(config map[string]string) bool {
 		"MongoDBURI", "MongoDBDatabase", "FrontendURL", "CollectionUsers", "CollectionValidCURPs", "CollectionClients", "CollectionRooms",
 		"JWTSecretKey", "ServerAddress", "ServerPort",
 		"CloudinaryCloudName", "CloudinaryAPIKey", "CloudinaryAPISecret",
-		"GoogleDriveFolderID", "GoogleDriveCredentialsPath",
+		"GoogleDriveFolderID", "GoogleDriveCredentialsPath", "LocalFileSystemFolder", "StorageSelector",
 	}
 
 	for _, key := range requiredKeys {
@@ -156,6 +164,8 @@ func loadFromToml(config map[string]string) {
 	config["CloudinaryAPISecret"] = Config.Constants.CloudinaryAPISecret
 	config["GoogleDriveFolderID"] = Config.Constants.GoogleDriveFolderID
 	config["GoogleDriveCredentialsPath"] = Config.Constants.GoogleDriveCredentialsPath
+	config["LocalFileSystemFolder"] = Config.Constants.LocalFileSystemFolder
+	config["StorageSelector"] = Config.Constants.StorageSelector
 }
 
 func assignConfigValues(config map[string]string) {
@@ -190,6 +200,10 @@ func assignConfigValues(config map[string]string) {
 	// Google Drive
 	GoogleDriveFolderID = config["GoogleDriveFolderID"]
 	GoogleDriveCredentialsPath = config["GoogleDriveCredentialsPath"]
+
+	LocalFileSystemFolder = config["LocalFileSystemFolder"]
+
+	StorageSelector = config["StorageSelector"]
 
 	// Inicializar AllCollections con las colecciones definidas individualmente
 	AllCollections = []string{
@@ -234,6 +248,8 @@ func createDefaultConfig(filename string) {
 
 	GoogleDriveFolderID = "your-google-drive-folder-id"
 	GoogleDriveCredentialsPath = "credentials.json"
+	LocalFileSystemFolder = "/uploads"
+	StorageSelector = "local"
 	`
 
 	// Crear el archivo config.toml con los valores predeterminados
@@ -288,6 +304,9 @@ type Constants struct {
 
 	GoogleDriveFolderID        string `toml:"GoogleDriveFolderID"`
 	GoogleDriveCredentialsPath string `toml:"GoogleDriveCredentialsPath"`
+
+	LocalFileSystemFolder string `toml:"/uploads"`
+	StorageSelector       string `toml:"local"`
 }
 
 // Config es una instancia global de ConfigFile que contiene la configuración cargada

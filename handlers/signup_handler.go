@@ -1,4 +1,3 @@
-// handlers/signup_handler.go
 package handlers
 
 import (
@@ -15,8 +14,9 @@ import (
 )
 
 type SignupHandler struct {
-	Client            *mongo.Client
-	CloudinaryService *services.CloudinaryService
+	Client                 *mongo.Client
+	CloudinaryService      *services.CloudinaryService
+	LocalFileSystemService *services.LocalFileSystemService
 }
 
 func (h *SignupHandler) Handle(w http.ResponseWriter, r *http.Request) {
@@ -62,12 +62,21 @@ func (h *SignupHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	file, handler, err := r.FormFile("profilePicture")
 	if err == nil {
 		defer file.Close()
-		profilePictureURL, err := h.CloudinaryService.UploadProfilePicture(file, handler)
-		if err != nil {
-			http.Error(w, "Error al guardar la imagen de perfil", http.StatusInternalServerError)
-			return
+		if constants.StorageSelector == "local" {
+			profilePictureURL, err := h.LocalFileSystemService.UploadFileImage(file, handler)
+			if err != nil {
+				http.Error(w, "Error al guardar la imagen de perfil localmente", http.StatusInternalServerError)
+				return
+			}
+			newUser.ProfilePicture = profilePictureURL
+		} else {
+			profilePictureURL, err := h.CloudinaryService.UploadProfilePicture(file, handler)
+			if err != nil {
+				http.Error(w, "Error al guardar la imagen de perfil en la nube", http.StatusInternalServerError)
+				return
+			}
+			newUser.ProfilePicture = profilePictureURL
 		}
-		newUser.ProfilePicture = profilePictureURL
 	} else {
 		newUser.ProfilePicture = ""
 	}

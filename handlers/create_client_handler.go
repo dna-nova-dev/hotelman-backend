@@ -21,9 +21,10 @@ import (
 
 // CreateClientHandler maneja la creación de nuevos clientes (Rental o Guest)
 type CreateClientHandler struct {
-	Client             *mongo.Client
-	CloudinaryService  *services.CloudinaryService
-	GoogleDriveService *services.GoogleDriveService
+	Client                 *mongo.Client
+	CloudinaryService      *services.CloudinaryService
+	GoogleDriveService     *services.GoogleDriveService
+	LocalFileSystemService *services.LocalFileSystemService
 }
 
 // Handle procesa la solicitud de creación de un nuevo cliente
@@ -58,13 +59,57 @@ func (h *CreateClientHandler) createRental(w http.ResponseWriter, r *http.Reques
 		UpdatedAt:     time.Now(),
 	}
 
-	// Subir archivos a Cloudinary
+	// Subir archivos según el StorageSelector
+	if constants.StorageSelector == "local" {
+		h.uploadFilesLocal(w, r, &rental)
+	} else {
+		h.uploadFilesCloud(w, r, &rental)
+	}
+
+	collection := h.Client.Database(constants.MongoDBDatabase).Collection(constants.CollectionClients)
+	_, err := collection.InsertOne(context.Background(), rental)
+	if err != nil {
+		http.Error(w, "Failed to create rental", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(rental)
+}
+
+func (h *CreateClientHandler) uploadFilesLocal(w http.ResponseWriter, r *http.Request, rental *models.Rental) {
+	// Subir archivos a sistema de archivos local
+	contratoFile, contratoHandler, err := r.FormFile("contratoFile")
+	if err == nil {
+		defer contratoFile.Close()
+		contratoURL, err := h.LocalFileSystemService.UploadFileImage(contratoFile, contratoHandler)
+		if err != nil {
+			http.Error(w, "Error al subir el contrato localmente", http.StatusInternalServerError)
+			return
+		}
+		rental.ContratoURL = contratoURL
+	}
+
+	ineFile, ineHandler, err := r.FormFile("ineFile")
+	if err == nil {
+		defer ineFile.Close()
+		ineURL, err := h.LocalFileSystemService.UploadFilePDF(ineFile, ineHandler)
+		if err != nil {
+			http.Error(w, "Error al subir el INE localmente", http.StatusInternalServerError)
+			return
+		}
+		rental.INEURL = ineURL
+	}
+}
+
+func (h *CreateClientHandler) uploadFilesCloud(w http.ResponseWriter, r *http.Request, rental *models.Rental) {
+	// Subir archivos a Google Drive y Cloudinary
 	contratoFile, contratoHandler, err := r.FormFile("contratoFile")
 	if err == nil {
 		defer contratoFile.Close()
 		contratoURL, err := h.GoogleDriveService.UploadFile(contratoFile, contratoHandler)
 		if err != nil {
-			http.Error(w, "Error al subir el contrato", http.StatusInternalServerError)
+			http.Error(w, "Error al subir el contrato a Google Drive", http.StatusInternalServerError)
 			return
 		}
 		rental.ContratoURL = contratoURL
@@ -75,21 +120,11 @@ func (h *CreateClientHandler) createRental(w http.ResponseWriter, r *http.Reques
 		defer ineFile.Close()
 		ineURL, err := h.CloudinaryService.UploadINEPicture(ineFile, ineHandler)
 		if err != nil {
-			http.Error(w, "Error al subir el INE", http.StatusInternalServerError)
+			http.Error(w, "Error al subir el INE a Cloudinary", http.StatusInternalServerError)
 			return
 		}
 		rental.INEURL = ineURL
 	}
-
-	collection := h.Client.Database(constants.MongoDBDatabase).Collection(constants.CollectionClients)
-	_, err = collection.InsertOne(context.Background(), rental)
-	if err != nil {
-		http.Error(w, "Failed to create rental", http.StatusInternalServerError)
-		return
-	}
-
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(rental)
 }
 
 func (h *CreateClientHandler) createGuest(w http.ResponseWriter, r *http.Request) {
