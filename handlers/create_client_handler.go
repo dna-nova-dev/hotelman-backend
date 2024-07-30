@@ -94,6 +94,7 @@ func (h *CreateClientHandler) uploadFilesLocal(w http.ResponseWriter, r *http.Re
 	if err == nil {
 		defer ineFile.Close()
 		ineURL, err := h.LocalFileSystemService.UploadFileImage(ineFile, ineHandler)
+		log.Println("ineFile on create client handler: ", ineFile)
 		if err != nil {
 			http.Error(w, "Error al subir el INE localmente", http.StatusInternalServerError)
 			return
