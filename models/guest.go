@@ -10,7 +10,6 @@ type Guest struct {
 	ID               primitive.ObjectID `bson:"_id" json:"id"`
 	CustomID         string             `bson:"customID" json:"customID"` // ID personalizado
 	ExtraDescription string             `bson:"extraDescription" json:"extraDescription"`
-	Name             string             `bson:"name" json:"name"`
 	Hair             string             `bson:"hair" json:"hair"`
 	Height           string             `bson:"height" json:"height"`
 	RoomNumber       string             `bson:"roomNumber" json:"roomNumber"`
