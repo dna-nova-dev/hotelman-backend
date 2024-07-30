@@ -82,7 +82,7 @@ func (h *CreateClientHandler) uploadFilesLocal(w http.ResponseWriter, r *http.Re
 	contratoFile, contratoHandler, err := r.FormFile("contratoFile")
 	if err == nil {
 		defer contratoFile.Close()
-		contratoURL, err := h.LocalFileSystemService.UploadFileImage(contratoFile, contratoHandler)
+		contratoURL, err := h.LocalFileSystemService.UploadFilePDF(contratoFile, contratoHandler)
 		if err != nil {
 			http.Error(w, "Error al subir el contrato localmente", http.StatusInternalServerError)
 			return
@@ -93,7 +93,7 @@ func (h *CreateClientHandler) uploadFilesLocal(w http.ResponseWriter, r *http.Re
 	ineFile, ineHandler, err := r.FormFile("ineFile")
 	if err == nil {
 		defer ineFile.Close()
-		ineURL, err := h.LocalFileSystemService.UploadFilePDF(ineFile, ineHandler)
+		ineURL, err := h.LocalFileSystemService.UploadFileImage(ineFile, ineHandler)
 		if err != nil {
 			http.Error(w, "Error al subir el INE localmente", http.StatusInternalServerError)
 			return
