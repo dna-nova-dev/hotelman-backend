@@ -80,7 +80,7 @@ func (h *CreateClientHandler) createRental(w http.ResponseWriter, r *http.Reques
 
 func (h *CreateClientHandler) uploadFilesLocal(w http.ResponseWriter, r *http.Request, rental *models.Rental) {
 	// Subir archivos a sistema de archivos local
-	/*contratoFile, contratoHandler, err := r.FormFile("contratoFile")
+	contratoFile, contratoHandler, err := r.FormFile("contratoFile")
 	if err == nil {
 		defer contratoFile.Close()
 		contratoURL, err := h.LocalFileSystemService.UploadFilePDF(contratoFile, contratoHandler)
@@ -89,7 +89,7 @@ func (h *CreateClientHandler) uploadFilesLocal(w http.ResponseWriter, r *http.Re
 			return
 		}
 		rental.ContratoURL = contratoURL
-	}*/
+	}
 	ineFile, ineHandler, err := r.FormFile("ineFile")
 	if err == nil {
 		defer ineFile.Close()
