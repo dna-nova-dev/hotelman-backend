@@ -1,11 +1,15 @@
 package handlers
 
 import (
+	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"log"
+	"io"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -13,9 +17,9 @@ import (
 	"hotelman-backend/constants"
 	"hotelman-backend/models"
 	"hotelman-backend/services"
+	"hotelman-backend/utils"
 
 	"github.com/google/uuid"
-
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
@@ -30,41 +34,46 @@ type CreateClientHandler struct {
 
 // Handle procesa la solicitud de creación de un nuevo cliente
 func (h *CreateClientHandler) Handle(w http.ResponseWriter, r *http.Request) {
-	err := r.ParseMultipartForm(10 << 20) // Limit to 10 MB
+	var clientData map[string]interface{}
+	err := json.NewDecoder(r.Body).Decode(&clientData)
 	if err != nil {
-		http.Error(w, "Error parsing form", http.StatusBadRequest)
+		http.Error(w, "Error parsing JSON", http.StatusBadRequest)
 		return
 	}
 
-	clientType := r.FormValue("type")
+	clientType, ok := clientData["type"].(string)
+	if !ok {
+		http.Error(w, "Client type is required", http.StatusBadRequest)
+		return
+	}
+
 	switch clientType {
 	case "rental":
-		h.createRental(w, r)
+		h.createRental(w, clientData)
 	case "guest":
-		h.createGuest(w, r)
+		h.createGuest(w, clientData)
 	default:
 		http.Error(w, "Unknown client type", http.StatusBadRequest)
 	}
 }
 
-func (h *CreateClientHandler) createRental(w http.ResponseWriter, r *http.Request) {
+func (h *CreateClientHandler) createRental(w http.ResponseWriter, clientData map[string]interface{}) {
 	rental := models.Rental{
 		ID:            primitive.NewObjectID(),
-		Nombres:       r.FormValue("nombres"),
-		Apellidos:     r.FormValue("apellidos"),
-		Correo:        r.FormValue("correo"),
-		NumeroCelular: r.FormValue("numeroCelular"),
-		CURP:          r.FormValue("curp"),
-		RoomNumber:    r.FormValue("RoomNumber"),
+		Nombres:       clientData["nombres"].(string),
+		Apellidos:     clientData["apellidos"].(string),
+		Correo:        clientData["correo"].(string),
+		NumeroCelular: clientData["numeroCelular"].(string),
+		CURP:          clientData["curp"].(string),
+		RoomNumber:    clientData["RoomNumber"].(string),
 		CreatedAt:     time.Now(),
 		UpdatedAt:     time.Now(),
 	}
 
-	// Subir archivos según el StorageSelector
 	if constants.StorageSelector == "local" {
-		h.uploadFilesLocal(w, r, &rental)
+		h.uploadFilesLocal(w, clientData, &rental)
 	} else {
-		h.uploadFilesCloud(w, r, &rental)
+		// Si usas almacenamiento en la nube, implementa aquí la lógica
 	}
 
 	collection := h.Client.Database(constants.MongoDBDatabase).Collection(constants.CollectionClients)
@@ -78,70 +87,86 @@ func (h *CreateClientHandler) createRental(w http.ResponseWriter, r *http.Reques
 	json.NewEncoder(w).Encode(rental)
 }
 
-func (h *CreateClientHandler) uploadFilesLocal(w http.ResponseWriter, r *http.Request, rental *models.Rental) {
-	// Subir archivos a sistema de archivos local
-	/*contratoFile, contratoHandler, err := r.FormFile("contratoFile")
-	if err == nil {
-		defer contratoFile.Close()
-		contratoURL, err := h.LocalFileSystemService.UploadFilePDF(contratoFile, contratoHandler)
+func (h *CreateClientHandler) uploadFilesLocal(w http.ResponseWriter, clientData map[string]interface{}, rental *models.Rental) {
+	// Subir archivos desde Base64 a sistema de archivos local
+
+	// Subir INE File
+	if ineFileBase64, ok := clientData["ineFile"].(map[string]interface{})["fileData"].(string); ok {
+		ineURL, err := h.saveBase64File(ineFileBase64, "images")
+		if err != nil {
+			http.Error(w, "Error al subir el INE localmente", http.StatusInternalServerError)
+			return
+		}
+		rental.INEURL = ineURL
+	}
+
+	// Subir Contrato File
+	if contratoFileBase64, ok := clientData["contratoFile"].(map[string]interface{})["fileData"].(string); ok {
+		contratoURL, err := h.saveBase64File(contratoFileBase64, "documents")
 		if err != nil {
 			http.Error(w, "Error al subir el contrato localmente", http.StatusInternalServerError)
 			return
 		}
 		rental.ContratoURL = contratoURL
-	}*/
-	ineFile, ineHandler, err := r.FormFile("ineFile")
-	if err == nil {
-		defer ineFile.Close()
-		ineURL, err := h.LocalFileSystemService.UploadFileImage(ineFile, ineHandler)
-		log.Println("ineFile on create client handler: ", ineFile)
-		if err != nil {
-			http.Error(w, "Error al subir el INE localmente", http.StatusInternalServerError)
-			return
-		}
-		log.Println("INE on create client handler: ", ineURL)
-		rental.INEURL = ineURL
 	}
 }
 
-func (h *CreateClientHandler) uploadFilesCloud(w http.ResponseWriter, r *http.Request, rental *models.Rental) {
-	// Subir archivos a Google Drive y Cloudinary
-	contratoFile, contratoHandler, err := r.FormFile("contratoFile")
-	if err == nil {
-		defer contratoFile.Close()
-		contratoURL, err := h.GoogleDriveService.UploadFile(contratoFile, contratoHandler)
-		if err != nil {
-			http.Error(w, "Error al subir el contrato a Google Drive", http.StatusInternalServerError)
-			return
-		}
-		rental.ContratoURL = contratoURL
+func (h *CreateClientHandler) saveBase64File(base64Data string, folder string) (string, error) {
+	// Decodificar Base64
+	decodedData, err := base64.StdEncoding.DecodeString(base64Data)
+	if err != nil {
+		return "", fmt.Errorf("failed to decode base64 data: %w", err)
 	}
 
-	ineFile, ineHandler, err := r.FormFile("ineFile")
-	if err == nil {
-		defer ineFile.Close()
-		ineURL, err := h.CloudinaryService.UploadINEPicture(ineFile, ineHandler)
-		if err != nil {
-			http.Error(w, "Error al subir el INE a Cloudinary", http.StatusInternalServerError)
-			return
-		}
-		rental.INEURL = ineURL
+	// Generar un nombre de archivo único
+	fileName := fmt.Sprintf("%s_%s", uuid.New().String(), folder)
+	filePath := filepath.Join(h.LocalFileSystemService.BasePath, folder, fileName)
+
+	// Crear el archivo en el sistema de archivos local
+	err = h.createFile(filePath, bytes.NewReader(decodedData))
+	if err != nil {
+		return "", fmt.Errorf("failed to save file: %w", err)
 	}
+
+	ip, err := utils.GetPublicIP()
+	if err != nil {
+		return "", fmt.Errorf("unable to get public IP: %v", err)
+	}
+
+	url := fmt.Sprintf("http://%s:8000/serve?folder=%s&filename=%s", ip, folder, fileName)
+	return url, nil
 }
 
-func (h *CreateClientHandler) createGuest(w http.ResponseWriter, r *http.Request) {
+func (h *CreateClientHandler) createFile(filePath string, data io.Reader) error {
+	// Crea el archivo en el sistema de archivos local
+	dst, err := os.Create(filePath)
+	if err != nil {
+		return fmt.Errorf("unable to create file: %v", err)
+	}
+	defer dst.Close()
+
+	// Copia el contenido del archivo cargado al nuevo archivo en el sistema de archivos local
+	_, err = io.Copy(dst, data)
+	if err != nil {
+		return fmt.Errorf("unable to copy file content: %v", err)
+	}
+
+	return nil
+}
+
+func (h *CreateClientHandler) createGuest(w http.ResponseWriter, clientData map[string]interface{}) {
 	// Generar ID personalizado
-	customID := generateCustomID(r.FormValue("hair"), r.FormValue("roomNumber"))
+	customID := generateCustomID(clientData["hair"].(string), clientData["roomNumber"].(string))
 
 	guest := models.Guest{
 		ID:               primitive.NewObjectID(),
 		CustomID:         customID, // Asignar el ID personalizado
-		ExtraDescription: r.FormValue("extraDescription"),
-		Hair:             r.FormValue("hair"),
-		Height:           r.FormValue("height"),
-		RoomNumber:       r.FormValue("roomNumber"),
-		Price:            parseFloat(r.FormValue("price")),
-		Duration:         parseInt(r.FormValue("duration")),
+		ExtraDescription: clientData["extraDescription"].(string),
+		Hair:             clientData["hair"].(string),
+		Height:           clientData["height"].(string),
+		RoomNumber:       clientData["roomNumber"].(string),
+		Price:            parseFloat(clientData["price"].(string)),
+		Duration:         parseInt(clientData["duration"].(string)),
 		CreatedAt:        time.Now(),
 		UpdatedAt:        time.Now(),
 	}
@@ -157,7 +182,6 @@ func (h *CreateClientHandler) createGuest(w http.ResponseWriter, r *http.Request
 	json.NewEncoder(w).Encode(guest)
 }
 
-// generateCustomID genera un ID personalizado en formato CURP
 func generateCustomID(hair string, roomNumber string) string {
 	// Generar un UUID y tomar solo los primeros 8 caracteres para reducir el tamaño
 	uuidPart := uuid.New().String()[:8]
