@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -25,10 +26,10 @@ func main() {
 
 	router := mux.NewRouter()
 	routes.RegisterRoutes(router, client, cloudinaryURL) // Registra las rutas
-
+	allowedOrigins := parseAllowedOrigins(constants.FrontendURL)
 	// Configura CORS
 	c := cors.New(cors.Options{
-		AllowedOrigins:   []string{"%s", constants.FrontendURL},
+		AllowedOrigins:   allowedOrigins,
 		AllowCredentials: true,
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Content-Type", "Authorization"},
@@ -46,4 +47,9 @@ func main() {
 	log.Printf("Frontend URL: %s", constants.FrontendURL)
 	log.Printf("Servidor iniciado en http://%s:%s", constants.ServerAddress, constants.ServerPort)
 	log.Fatal(srv.ListenAndServe())
+}
+
+// parseAllowedOrigins convierte una cadena separada por punto y coma en un arreglo de URLs
+func parseAllowedOrigins(origins string) []string {
+	return strings.Split(origins, ";")
 }
