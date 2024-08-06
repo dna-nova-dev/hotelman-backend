@@ -38,15 +38,20 @@ func main() {
 	// Aplica el middleware de CORS
 	handler := c.Handler(router)
 
+	// Configurar los certificados SSL
+	certFile := "/etc/letsencrypt/live/api-v1.hotelman.pulse.lat/fullchain.pem"
+	keyFile := "/etc/letsencrypt/live/api-v1.hotelman.pulse.lat/privkey.pem"
+
 	srv := &http.Server{
 		Handler:      handler,
 		Addr:         constants.ServerAddress + ":" + constants.ServerPort,
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
 	}
+
 	log.Printf("Frontend URL: %s", constants.FrontendURL)
-	log.Printf("Servidor iniciado en http://%s:%s", constants.ServerAddress, constants.ServerPort)
-	log.Fatal(srv.ListenAndServe())
+	log.Printf("Servidor iniciado en https://%s:%s", constants.ServerAddress, constants.ServerPort)
+	log.Fatal(srv.ListenAndServeTLS(certFile, keyFile))
 }
 
 // parseAllowedOrigins convierte una cadena separada por punto y coma en un arreglo de URLs
