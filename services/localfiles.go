@@ -6,8 +6,7 @@ import (
 	"mime/multipart"
 	"os"
 	"path/filepath"
-
-	"hotelman-backend/utils" // Asegúrate de que la ruta sea correcta
+	// Asegúrate de que la ruta sea correcta
 )
 
 // LocalFileSystemService es un servicio para manejar archivos en el sistema de archivos local
@@ -110,11 +109,6 @@ func (l *LocalFileSystemService) UploadFileImage(file multipart.File, handler *m
 	fmt.Printf("Image file uploaded successfully: %s\n", filePath)
 	//relativePath := strings.TrimPrefix(filePath, l.BasePath+"/")
 
-	ip, err := utils.GetPublicIP()
-	if err != nil {
-		return "", fmt.Errorf("unable to get public IP: %v", err)
-	}
-
-	url := fmt.Sprintf("http://%s:8000/serve?folder=images&filename=%s", ip, filepath.Base(filePath))
+	url := fmt.Sprintf("https://api-v1.hotelman.pulse.lat:8000/serve?folder=images&filename=%s", filepath.Base(filePath))
 	return url, nil
 }
