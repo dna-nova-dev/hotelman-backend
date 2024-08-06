@@ -77,12 +77,7 @@ func (l *LocalFileSystemService) UploadFilePDF(file multipart.File, handler *mul
 	fmt.Printf("PDF file uploaded successfully: %s\n", filePath)
 	//relativePath := strings.TrimPrefix(filePath, l.BasePath+"/")
 
-	ip, err := utils.GetPublicIP()
-	if err != nil {
-		return "", fmt.Errorf("unable to get public IP: %v", err)
-	}
-
-	url := fmt.Sprintf("https://%s:8000/serve?folder=documents&filename=%s", ip, filepath.Base(filePath))
+	url := fmt.Sprintf("https://api-v1.hotelman.pulse.lat:8000/serve?folder=documents&filename=%s", filepath.Base(filePath))
 	return url, nil
 }
 
