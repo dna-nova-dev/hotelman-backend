@@ -82,7 +82,7 @@ func (l *LocalFileSystemService) UploadFilePDF(file multipart.File, handler *mul
 		return "", fmt.Errorf("unable to get public IP: %v", err)
 	}
 
-	url := fmt.Sprintf("http://%s:8000/serve?folder=documents&filename=%s", ip, filepath.Base(filePath))
+	url := fmt.Sprintf("https://%s:8000/serve?folder=documents&filename=%s", ip, filepath.Base(filePath))
 	return url, nil
 }
 
