@@ -51,5 +51,5 @@ func main() {
 
 // parseAllowedOrigins convierte una cadena separada por punto y coma en un arreglo de URLs
 func parseAllowedOrigins(origins string) []string {
-	return strings.Split(origins, ";")
+	return strings.Split(origins, ",")
 }
