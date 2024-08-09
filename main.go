@@ -39,8 +39,8 @@ func main() {
 	handler := c.Handler(router)
 
 	// Configurar los certificados SSL
-	certFile := "/etc/letsencrypt/live/api-v1.hotelman.pulse.lat/fullchain.pem"
-	keyFile := "/etc/letsencrypt/live/api-v1.hotelman.pulse.lat/privkey.pem"
+	certFile := "/etc/letsencrypt/live/api-v1.hotelman.dna-nova.tech/fullchain.pem"
+	keyFile := "/etc/letsencrypt/live/api-v1.hotelman.dna-nova.tech/privkey.pem"
 
 	srv := &http.Server{
 		Handler:      handler,

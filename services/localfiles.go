@@ -76,7 +76,7 @@ func (l *LocalFileSystemService) UploadFilePDF(file multipart.File, handler *mul
 	fmt.Printf("PDF file uploaded successfully: %s\n", filePath)
 	//relativePath := strings.TrimPrefix(filePath, l.BasePath+"/")
 
-	url := fmt.Sprintf("https://api-v1.hotelman.pulse.lat:8000/serve?folder=documents&filename=%s", filepath.Base(filePath))
+	url := fmt.Sprintf("https://api-v1.hotelman.dna-nova.tech:8000/serve?folder=documents&filename=%s", filepath.Base(filePath))
 	return url, nil
 }
 
@@ -109,6 +109,6 @@ func (l *LocalFileSystemService) UploadFileImage(file multipart.File, handler *m
 	fmt.Printf("Image file uploaded successfully: %s\n", filePath)
 	//relativePath := strings.TrimPrefix(filePath, l.BasePath+"/")
 
-	url := fmt.Sprintf("https://api-v1.hotelman.pulse.lat:8000/serve?folder=images&filename=%s", filepath.Base(filePath))
+	url := fmt.Sprintf("https://api-v1.hotelman.dna-nova.tech:8000/serve?folder=images&filename=%s", filepath.Base(filePath))
 	return url, nil
 }
