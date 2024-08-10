@@ -152,3 +152,23 @@ func (h *RoomHandler) AssignOccupantHandler(w http.ResponseWriter, r *http.Reque
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(bson.M{"message": "Occupant assigned to room successfully"})
 }
+
+// GetAllRoomsHandler maneja la obtención de todas las habitaciones
+func (h *RoomHandler) GetAllRoomsHandler(w http.ResponseWriter, r *http.Request) {
+	collection := h.Client.Database(constants.MongoDBDatabase).Collection(constants.CollectionRooms)
+	cursor, err := collection.Find(context.Background(), bson.M{})
+	if err != nil {
+		http.Error(w, "Failed to get rooms", http.StatusInternalServerError)
+		return
+	}
+	defer cursor.Close(context.Background())
+
+	var rooms []models.Room
+	if err = cursor.All(context.Background(), &rooms); err != nil {
+		http.Error(w, "Failed to decode rooms", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(rooms)
+}

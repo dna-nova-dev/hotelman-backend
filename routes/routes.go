@@ -94,9 +94,11 @@ func RegisterRoutes(router *mux.Router, client *mongo.Client, cloudinaryURL stri
 	router.Handle("/user", requireAuthReceptionist.Middleware(http.HandlerFunc(userDataHandler.Handle))).Methods("GET")
 	router.HandleFunc("/create-client", createHandler.Handle).Methods("POST")
 	router.HandleFunc("/clients", clientsHandler.Handle).Methods("GET")
+	router.HandleFunc("/clients/search", clientsHandler.Search).Methods("GET")
 
 	// Endpoint rooms
 	router.HandleFunc("/rooms", roomHandler.CreateRoomHandler).Methods("POST")
+	router.HandleFunc("/rooms", roomHandler.GetAllRoomsHandler).Methods("GET")
 	router.HandleFunc("/rooms/status", roomHandler.UpdateRoomStatusHandler).Methods("PUT")
 	router.HandleFunc("/rooms/occupant", roomHandler.GetRoomOccupantHandler).Methods("GET")
 	router.HandleFunc("/rooms/assign", roomHandler.AssignOccupantHandler).Methods("PUT")

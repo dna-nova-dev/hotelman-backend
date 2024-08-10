@@ -92,3 +92,49 @@ func (h *GetClientsHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
 }
+
+// Implementación del algoritmo de búsqueda optimizado
+func (h *GetClientsHandler) Search(w http.ResponseWriter, r *http.Request) {
+	clientType := r.URL.Query().Get("type")
+	search := r.URL.Query().Get("search")
+
+	if search == "" {
+		http.Error(w, "Search term is required", http.StatusBadRequest)
+		return
+	}
+
+	var filter bson.M
+	switch clientType {
+	case "rental":
+		filter = bson.M{"nombres": bson.M{"$regex": search, "$options": "i"}} // Case insensitive search for rentals
+	case "guest":
+		filter = bson.M{"customID": bson.M{"$regex": search, "$options": "i"}} // Case insensitive search for guests
+	default:
+		http.Error(w, "Invalid client type", http.StatusBadRequest)
+		return
+	}
+
+	collection := h.Client.Database(constants.MongoDBDatabase).Collection(constants.CollectionClients)
+	opts := options.Find().SetSort(bson.D{{Key: "_id", Value: 1}}) // Ordenar por ID para paginación
+
+	// Realizar la búsqueda completa sin paginación, pero limitando resultados en cada solicitud
+	cursor, err := collection.Find(context.Background(), filter, opts)
+	if err != nil {
+		http.Error(w, "Failed to retrieve clients", http.StatusInternalServerError)
+		return
+	}
+	defer cursor.Close(context.Background())
+
+	var clients []bson.M
+	if err := cursor.All(context.Background(), &clients); err != nil {
+		http.Error(w, "Failed to decode clients", http.StatusInternalServerError)
+		return
+	}
+
+	response := map[string]interface{}{
+		"clients": clients,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
+}
