@@ -17,12 +17,6 @@ type AnalyticsHandler struct {
 	Client *mongo.Client
 }
 
-// AnalyticsRequest define los parámetros de la solicitud de análisis
-type AnalyticsRequest struct {
-	StartDate string `json:"startDate"`
-	EndDate   string `json:"endDate"`
-}
-
 // AnalyticsResponse define la estructura de la respuesta de análisis
 type AnalyticsResponse struct {
 	TotalPriceGuest float64 `json:"totalPriceGuest"`
@@ -39,25 +33,23 @@ type AnalyticsResponse struct {
 
 // GetAnalyticsHandler maneja la obtención de datos de análisis
 func (h *AnalyticsHandler) GetAnalyticsHandler(w http.ResponseWriter, r *http.Request) {
-	var req AnalyticsRequest
-	err := json.NewDecoder(r.Body).Decode(&req)
-	if err != nil {
-		http.Error(w, "Error parsing request body", http.StatusBadRequest)
-		return
-	}
+	// Leer parámetros de consulta (query parameters)
+	startDateStr := r.URL.Query().Get("startDate")
+	endDateStr := r.URL.Query().Get("endDate")
 
 	// Configuración de fechas por defecto (mensuales)
 	now := time.Now().UTC()
 	var startDate, endDate time.Time
 
-	if req.StartDate != "" && req.EndDate != "" {
+	if startDateStr != "" && endDateStr != "" {
 		// Convertir las fechas proporcionadas
-		startDate, err = time.Parse(time.RFC3339, req.StartDate)
+		var err error
+		startDate, err = time.Parse(time.RFC3339, startDateStr)
 		if err != nil {
 			http.Error(w, "Invalid startDate format", http.StatusBadRequest)
 			return
 		}
-		endDate, err = time.Parse(time.RFC3339, req.EndDate)
+		endDate, err = time.Parse(time.RFC3339, endDateStr)
 		if err != nil {
 			http.Error(w, "Invalid endDate format", http.StatusBadRequest)
 			return
