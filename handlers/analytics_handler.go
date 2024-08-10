@@ -19,7 +19,6 @@ type AnalyticsHandler struct {
 
 // AnalyticsRequest define los parámetros de la solicitud de análisis
 type AnalyticsRequest struct {
-	Period    string `json:"period"` // Puede ser "daily", "weekly", "monthly"
 	StartDate string `json:"startDate"`
 	EndDate   string `json:"endDate"`
 }
@@ -69,16 +68,19 @@ func (h *AnalyticsHandler) GetAnalyticsHandler(w http.ResponseWriter, r *http.Re
 		endDate = time.Date(now.Year(), now.Month()+1, 1, 0, 0, 0, 0, time.UTC).Add(-time.Nanosecond)
 	}
 
-	// Conectar a la colección de huéspedes
-	guestCollection := h.Client.Database(constants.MongoDBDatabase).Collection("guests")
+	// Conectar a la colección de clientes para calcular el total de precios
+	clientCollection := h.Client.Database(constants.MongoDBDatabase).Collection("clients")
 
-	// Obtener el total de precios de los huéspedes según el período solicitado
+	// Obtener el total de precios de los clientes según el período solicitado
 	priceSumPipeline := mongo.Pipeline{
-		{{"$match", bson.D{{"createdAt", bson.D{{"$gte", startDate}, {"$lte", endDate}}}}}},
+		{{"$match", bson.D{
+			{"createdAt", bson.D{{"$gte", startDate}, {"$lte", endDate}}},
+			{"price", bson.D{{"$exists", true}, {"$type", "double"}}}, // Filtra solo documentos que contienen el campo "price"
+		}}},
 		{{"$group", bson.D{{"_id", nil}, {"totalPrice", bson.D{{"$sum", "$price"}}}}}},
 	}
 
-	cursor, err := guestCollection.Aggregate(context.Background(), priceSumPipeline)
+	cursor, err := clientCollection.Aggregate(context.Background(), priceSumPipeline)
 	if err != nil {
 		http.Error(w, "Failed to calculate total guest price", http.StatusInternalServerError)
 		return
@@ -188,7 +190,6 @@ func (h *AnalyticsHandler) GetAnalyticsHandler(w http.ResponseWriter, r *http.Re
 	}
 
 	// Obtener el total de clientes
-	clientCollection := h.Client.Database(constants.MongoDBDatabase).Collection("clients")
 	clientTotalCount, err := clientCollection.CountDocuments(context.Background(), bson.M{})
 	if err != nil {
 		http.Error(w, "Failed to count total clients", http.StatusInternalServerError)
