@@ -20,4 +20,6 @@ type Rental struct {
 	History       []HistoryRecord    `bson:"history" json:"history"`
 	CreatedAt     time.Time          `bson:"createdAt" json:"createdAt"`
 	UpdatedAt     time.Time          `bson:"updatedAt" json:"updatedAt"`
+	Estado        string             `bson:"estado" json:"estado"`           // Nuevo campo Estado
+	RentalPrice   float64            `bson:"rentalPrice" json:"rentalPrice"` // Nuevo campo RentalPrice
 }

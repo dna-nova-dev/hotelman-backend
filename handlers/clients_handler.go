@@ -9,6 +9,7 @@ import (
 	"hotelman-backend/constants"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -18,6 +19,17 @@ type GetClientsHandler struct {
 }
 
 func (h *GetClientsHandler) Handle(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodGet:
+		h.getClients(w, r)
+	case http.MethodPut:
+		h.Update(w, r)
+	default:
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	}
+}
+
+func (h *GetClientsHandler) getClients(w http.ResponseWriter, r *http.Request) {
 	clientType := r.URL.Query().Get("type")
 	search := r.URL.Query().Get("search")
 	pageStr := r.URL.Query().Get("page")
@@ -91,6 +103,58 @@ func (h *GetClientsHandler) Handle(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
+}
+
+func (h *GetClientsHandler) Update(w http.ResponseWriter, r *http.Request) {
+	// Parsear el ID del cliente desde los parámetros de la URL
+	clientID := r.URL.Query().Get("id")
+	if clientID == "" {
+		http.Error(w, "Missing client ID", http.StatusBadRequest)
+		return
+	}
+
+	// Convertir el ID a un ObjectID de MongoDB
+	objectID, err := primitive.ObjectIDFromHex(clientID)
+	if err != nil {
+		http.Error(w, "Invalid client ID", http.StatusBadRequest)
+		return
+	}
+
+	// Estructura para capturar los datos del cuerpo de la solicitud
+	var updateData map[string]interface{}
+
+	// Decodificar el cuerpo de la solicitud en la estructura
+	if err := json.NewDecoder(r.Body).Decode(&updateData); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	// Si no se proporciona ningún campo para actualizar, retornar un error
+	if len(updateData) == 0 {
+		http.Error(w, "No fields to update", http.StatusBadRequest)
+		return
+	}
+
+	// Seleccionar la colección de clientes
+	collection := h.Client.Database(constants.MongoDBDatabase).Collection(constants.CollectionClients)
+
+	// Realizar la actualización
+	filter := bson.M{"_id": objectID}
+	result, err := collection.UpdateOne(context.Background(), filter, bson.M{"$set": updateData})
+	if err != nil {
+		http.Error(w, "Failed to update client", http.StatusInternalServerError)
+		return
+	}
+
+	// Verificar si se actualizó algún documento
+	if result.MatchedCount == 0 {
+		http.Error(w, "Client not found", http.StatusNotFound)
+		return
+	}
+
+	// Responder con un mensaje de éxito
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{"message": "Client updated successfully"})
 }
 
 // Implementación del algoritmo de búsqueda optimizado
