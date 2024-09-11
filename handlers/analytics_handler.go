@@ -26,9 +26,7 @@ type AnalyticsResponse struct {
 	Rental struct {
 		Total int `json:"total"`
 	} `json:"rental"`
-	TotalClients         int `json:"totalClients"`
-	TotalGuestsWithID    int `json:"totalGuestsWithID"`
-	TotalGuestsWithoutID int `json:"totalGuestsWithoutID"`
+	TotalClients int `json:"totalClients"`
 }
 
 // GetAnalyticsHandler maneja la obtención de datos de análisis
@@ -198,16 +196,14 @@ func (h *AnalyticsHandler) GetAnalyticsHandler(w http.ResponseWriter, r *http.Re
 		Guest: struct {
 			Total int `json:"total"`
 		}{
-			Total: guestTotalCountResult.Total,
+			Total: guestWithIDCountResult.Total,
 		},
 		Rental: struct {
 			Total int `json:"total"`
 		}{
-			Total: rentalTotalCountResult.Total,
+			Total: guestWithoutIDCountResult.Total,
 		},
-		TotalClients:         int(clientTotalCount),
-		TotalGuestsWithID:    guestWithIDCountResult.Total,
-		TotalGuestsWithoutID: guestWithoutIDCountResult.Total,
+		TotalClients: int(clientTotalCount),
 	}
 
 	w.WriteHeader(http.StatusOK)
