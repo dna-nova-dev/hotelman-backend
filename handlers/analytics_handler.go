@@ -26,8 +26,9 @@ type AnalyticsResponse struct {
 	Rental struct {
 		Total int `json:"total"`
 	} `json:"rental"`
-	TotalClients      int `json:"totalClients"`
-	TotalGuestsWithID int `json:"totalGuestsWithID"`
+	TotalClients         int `json:"totalClients"`
+	TotalGuestsWithID    int `json:"totalGuestsWithID"`
+	TotalGuestsWithoutID int `json:"totalGuestsWithoutID"`
 }
 
 // GetAnalyticsHandler maneja la obtención de datos de análisis
@@ -144,7 +145,6 @@ func (h *AnalyticsHandler) GetAnalyticsHandler(w http.ResponseWriter, r *http.Re
 	// Obtener el total de huéspedes con customID
 	guestWithIDCountPipeline := mongo.Pipeline{
 		{{"$match", bson.D{
-			{"roomType", "guest"},
 			{"customID", bson.D{{"$exists", true}, {"$ne", ""}}}, // Filtrar clientes con customID no vacío
 		}}},
 		{{"$count", "total"}},
@@ -167,6 +167,31 @@ func (h *AnalyticsHandler) GetAnalyticsHandler(w http.ResponseWriter, r *http.Re
 		}
 	}
 
+	// Obtener el total de huéspedes sin customID
+	guestWithoutIDCountPipeline := mongo.Pipeline{
+		{{"$match", bson.D{
+			{"customID", bson.D{{"$exists", false}}}, // Filtrar clientes sin customID
+		}}},
+		{{"$count", "total"}},
+	}
+
+	cursor, err = clientCollection.Aggregate(context.Background(), guestWithoutIDCountPipeline)
+	if err != nil {
+		http.Error(w, "Failed to calculate total guests without customID", http.StatusInternalServerError)
+		return
+	}
+
+	var guestWithoutIDCountResult struct {
+		Total int `bson:"total"`
+	}
+
+	if cursor.Next(context.Background()) {
+		if err := cursor.Decode(&guestWithoutIDCountResult); err != nil {
+			http.Error(w, "Failed to decode total guests without customID", http.StatusInternalServerError)
+			return
+		}
+	}
+
 	// Construir la respuesta
 	response := AnalyticsResponse{
 		TotalPriceGuest: priceSumResult.TotalPrice,
@@ -180,8 +205,9 @@ func (h *AnalyticsHandler) GetAnalyticsHandler(w http.ResponseWriter, r *http.Re
 		}{
 			Total: rentalTotalCountResult.Total,
 		},
-		TotalClients:      int(clientTotalCount),
-		TotalGuestsWithID: guestWithIDCountResult.Total,
+		TotalClients:         int(clientTotalCount),
+		TotalGuestsWithID:    guestWithIDCountResult.Total,
+		TotalGuestsWithoutID: guestWithoutIDCountResult.Total,
 	}
 
 	w.WriteHeader(http.StatusOK)
