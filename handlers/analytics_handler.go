@@ -65,7 +65,7 @@ func (h *AnalyticsHandler) GetAnalyticsHandler(w http.ResponseWriter, r *http.Re
 	priceSumPipeline := mongo.Pipeline{
 		{{"$match", bson.D{
 			{"createdAt", bson.D{{"$gte", startDate}, {"$lte", endDate}}},
-			{"price", bson.D{{"$exists", true}, {"$type", "double"}}}, // Filtra solo documentos que contienen el campo "price"
+			{"price", bson.D{{"$exists", true}, {"$type", "double"}}},
 		}}},
 		{{"$group", bson.D{{"_id", nil}, {"totalPrice", bson.D{{"$sum", "$price"}}}}}},
 	}
@@ -87,9 +87,12 @@ func (h *AnalyticsHandler) GetAnalyticsHandler(w http.ResponseWriter, r *http.Re
 		}
 	}
 
-	// Obtener el total de habitaciones de huéspedes
+	// Obtener el total de habitaciones de huéspedes según el período solicitado
 	guestTotalPipeline := mongo.Pipeline{
-		{{"$match", bson.D{{"roomType", "guest"}}}},
+		{{"$match", bson.D{
+			{"roomType", "guest"},
+			{"createdAt", bson.D{{"$gte", startDate}, {"$lte", endDate}}},
+		}}},
 		{{"$count", "total"}},
 	}
 
@@ -110,9 +113,12 @@ func (h *AnalyticsHandler) GetAnalyticsHandler(w http.ResponseWriter, r *http.Re
 		}
 	}
 
-	// Obtener el total de habitaciones de renta
+	// Obtener el total de habitaciones de renta según el período solicitado
 	rentalTotalPipeline := mongo.Pipeline{
-		{{"$match", bson.D{{"roomType", "rental"}}}},
+		{{"$match", bson.D{
+			{"roomType", "rental"},
+			{"createdAt", bson.D{{"$gte", startDate}, {"$lte", endDate}}},
+		}}},
 		{{"$count", "total"}},
 	}
 
@@ -134,60 +140,12 @@ func (h *AnalyticsHandler) GetAnalyticsHandler(w http.ResponseWriter, r *http.Re
 	}
 
 	// Obtener el total de clientes
-	clientTotalCount, err := clientCollection.CountDocuments(context.Background(), bson.M{})
+	clientTotalCount, err := clientCollection.CountDocuments(context.Background(), bson.M{
+		"createdAt": bson.D{{"$gte", startDate}, {"$lte", endDate}},
+	})
 	if err != nil {
 		http.Error(w, "Failed to count total clients", http.StatusInternalServerError)
 		return
-	}
-
-	// Obtener el total de huéspedes con customID
-	guestWithIDCountPipeline := mongo.Pipeline{
-		{{"$match", bson.D{
-			{"customID", bson.D{{"$exists", true}, {"$ne", ""}}}, // Filtrar clientes con customID no vacío
-		}}},
-		{{"$count", "total"}},
-	}
-
-	cursor, err = clientCollection.Aggregate(context.Background(), guestWithIDCountPipeline)
-	if err != nil {
-		http.Error(w, "Failed to calculate total guests with customID", http.StatusInternalServerError)
-		return
-	}
-
-	var guestWithIDCountResult struct {
-		Total int `bson:"total"`
-	}
-
-	if cursor.Next(context.Background()) {
-		if err := cursor.Decode(&guestWithIDCountResult); err != nil {
-			http.Error(w, "Failed to decode total guests with customID", http.StatusInternalServerError)
-			return
-		}
-	}
-
-	// Obtener el total de huéspedes sin customID
-	guestWithoutIDCountPipeline := mongo.Pipeline{
-		{{"$match", bson.D{
-			{"customID", bson.D{{"$exists", false}}}, // Filtrar clientes sin customID
-		}}},
-		{{"$count", "total"}},
-	}
-
-	cursor, err = clientCollection.Aggregate(context.Background(), guestWithoutIDCountPipeline)
-	if err != nil {
-		http.Error(w, "Failed to calculate total guests without customID", http.StatusInternalServerError)
-		return
-	}
-
-	var guestWithoutIDCountResult struct {
-		Total int `bson:"total"`
-	}
-
-	if cursor.Next(context.Background()) {
-		if err := cursor.Decode(&guestWithoutIDCountResult); err != nil {
-			http.Error(w, "Failed to decode total guests without customID", http.StatusInternalServerError)
-			return
-		}
 	}
 
 	// Construir la respuesta
@@ -196,12 +154,12 @@ func (h *AnalyticsHandler) GetAnalyticsHandler(w http.ResponseWriter, r *http.Re
 		Guest: struct {
 			Total int `json:"total"`
 		}{
-			Total: guestWithIDCountResult.Total,
+			Total: guestTotalCountResult.Total,
 		},
 		Rental: struct {
 			Total int `json:"total"`
 		}{
-			Total: guestWithoutIDCountResult.Total,
+			Total: rentalTotalCountResult.Total,
 		},
 		TotalClients: int(clientTotalCount),
 	}
