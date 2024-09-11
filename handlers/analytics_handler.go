@@ -26,7 +26,8 @@ type AnalyticsResponse struct {
 	Rental struct {
 		Total int `json:"total"`
 	} `json:"rental"`
-	TotalClients int `json:"totalClients"`
+	TotalClients      int `json:"totalClients"`
+	TotalGuestsWithID int `json:"totalGuestsWithID"`
 }
 
 // GetAnalyticsHandler maneja la obtención de datos de análisis
@@ -140,6 +141,32 @@ func (h *AnalyticsHandler) GetAnalyticsHandler(w http.ResponseWriter, r *http.Re
 		return
 	}
 
+	// Obtener el total de huéspedes con customID
+	guestWithIDCountPipeline := mongo.Pipeline{
+		{{"$match", bson.D{
+			{"roomType", "guest"},
+			{"customID", bson.D{{"$exists", true}, {"$ne", ""}}}, // Filtrar clientes con customID no vacío
+		}}},
+		{{"$count", "total"}},
+	}
+
+	cursor, err = clientCollection.Aggregate(context.Background(), guestWithIDCountPipeline)
+	if err != nil {
+		http.Error(w, "Failed to calculate total guests with customID", http.StatusInternalServerError)
+		return
+	}
+
+	var guestWithIDCountResult struct {
+		Total int `bson:"total"`
+	}
+
+	if cursor.Next(context.Background()) {
+		if err := cursor.Decode(&guestWithIDCountResult); err != nil {
+			http.Error(w, "Failed to decode total guests with customID", http.StatusInternalServerError)
+			return
+		}
+	}
+
 	// Construir la respuesta
 	response := AnalyticsResponse{
 		TotalPriceGuest: priceSumResult.TotalPrice,
@@ -153,7 +180,8 @@ func (h *AnalyticsHandler) GetAnalyticsHandler(w http.ResponseWriter, r *http.Re
 		}{
 			Total: rentalTotalCountResult.Total,
 		},
-		TotalClients: int(clientTotalCount),
+		TotalClients:      int(clientTotalCount),
+		TotalGuestsWithID: guestWithIDCountResult.Total,
 	}
 
 	w.WriteHeader(http.StatusOK)
